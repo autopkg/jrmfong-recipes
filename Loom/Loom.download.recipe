@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Description</key>
+    <string>Download recipe for the latest available version of Atlassian Loom.</string>
+    <key>Identifier</key>
+    <string>com.github.jerefong.download.Loom</string>
+    <key>Input</key>
+    <dict>
+        <key>NAME</key>
+        <string>Loom</string>
+        <key>BASE_URL</key>
+        <string>http://packages.loom.com/desktop-packages</string>
+    </dict>
+    <key>Process</key>
+    <array>
+        <dict>
+            <key>Processor</key>
+            <string>URLTextSearcher</string>
+            <key>Arguments</key>
+            <dict>
+                <key>url</key>
+                <string>%BASE_URL%/latest-mac.yml</string>
+                <key>re_pattern</key>
+                <string>Loom-[0-9.]+-arm64.dmg</string>
+                <key>filename</key>
+                <string>%NAME%.dmg</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>Processor</key>
+            <string>URLDownloader</string>
+            <key>Arguments</key>
+            <dict>
+                <key>url</key>
+                <string>%BASE_URL%/%match%</string>
+                <key>filename</key>
+                <string>%NAME%.dmg</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>Processor</key>
+            <string>EndOfCheckPhase</string>
+        </dict>
+        <dict>
+            <key>Processor</key>
+            <string>CodeSignatureVerifier</string>
+            <key>Arguments</key>
+            <dict>
+                <key>input_path</key>
+                <string>%pathname%/%NAME%.app</string>
+                <key>strict_verification</key>
+                <true/>
+                <key>deep_verification</key>
+                <true/>
+                <key>requirement</key>
+                <string>identifier "com.loom.desktop" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = QGD2ZPXZZG</string>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>
