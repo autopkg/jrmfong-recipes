@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>Description</key>
-	<string>Downloads the latest version of Poly Lens and renames its installer package.</string>
+	<string>Downloads the latest version of Lens Desktop aka Poly Lens and renames its installer package.</string>
 	<key>Identifier</key>
 	<string>com.github.jerefong.pkg.LensDesktop</string>
 	<key>Input</key>
