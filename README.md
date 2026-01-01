@@ -1,4 +1,4 @@
-A couple of recipes that works with AutoPkg. 
+A couple of recipes that work with AutoPkg. 
 
 * FileZilla
 * GPG Suite
