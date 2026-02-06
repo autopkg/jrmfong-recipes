@@ -3,41 +3,29 @@
 <plist version="1.0">
 <dict>
     <key>Description</key>
-    <string>Downloads the latest version of FileZilla and turns it into a package.</string>
+    <string>Downloads the latest version of Ekahau AI Pro and turns it into a package.</string>
     <key>Identifier</key>
-    <string>com.github.jerefong.pkg.FileZilla</string>
+    <string>com.github.jrmfong.pkg.EkahauAIPro</string>
     <key>Input</key>
     <dict>
         <key>NAME</key>
-        <string>FileZilla</string>
+        <string>Ekahau AI Pro</string>
     </dict>
     <key>ParentRecipe</key>
-    <string>com.github.pappirauk.FileZilla.download</string>
+    <string>com.github.jrmfong.download.EkahauAIPro</string>
     <key>Process</key>
     <array>
         <dict>
             <key>Arguments</key>
             <dict>
                 <key>app_path</key>
-                <string>%RECIPE_CACHE_DIR%/%NAME%/*.app</string>
+                <string>%pathname%/%NAME%.app</string>
                 <key>version</key>
                 <string>%version%</string>
             </dict>
             <key>Processor</key>
             <string>AppPkgCreator</string>
         </dict>
-        <dict>
-            <key>Arguments</key>
-            <dict>
-                <key>path_list</key>
-		<array>
-                	<string>%RECIPE_CACHE_DIR%/%NAME%/</string>
-                </array>
-            </dict>
-            <key>Processor</key>
-            <string>PathDeleter</string>
-        </dict>
     </array>
 </dict>
 </plist>
-

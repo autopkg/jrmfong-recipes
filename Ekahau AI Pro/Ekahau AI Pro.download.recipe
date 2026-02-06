@@ -3,16 +3,18 @@
 <plist version="1.0">
 <dict>
     <key>Description</key>
-    <string>Download recipe for the latest available version of Atlassian Loom.</string>
+    <string>Download the current package of Ekahau AI Pro.</string>
     <key>Identifier</key>
-    <string>com.github.jrmfong.download.Loom</string>
+    <string>com.github.jrmfong.download.EkahauAIPro</string>
     <key>Input</key>
     <dict>
         <key>NAME</key>
-        <string>Loom</string>
+        <string>Ekahau AI Pro</string>
         <key>BASE_URL</key>
-        <string>http://packages.loom.com/desktop-packages</string>
+        <string>https://sw.ekahau.com/download/pro/</string>
     </dict>
+    <key>MinimumVersion</key>
+    <string>0.5.0</string>
     <key>Process</key>
     <array>
         <dict>
@@ -20,12 +22,12 @@
             <string>URLTextSearcher</string>
             <key>Arguments</key>
             <dict>
+                <key>result_output_var_name</key>
+                <string>version</string>
                 <key>url</key>
-                <string>%BASE_URL%/latest-mac.yml</string>
+                <string>%BASE_URL%</string>
                 <key>re_pattern</key>
-                <string>Loom-[0-9.]+-arm64.dmg</string>
-                <key>filename</key>
-                <string>%NAME%.dmg</string>
+                <string>https://sw.ekahau.com/download/pro/setup/EkahauAIPro-([0-9.]+).dmg</string>
             </dict>
         </dict>
         <dict>
@@ -33,10 +35,10 @@
             <string>URLDownloader</string>
             <key>Arguments</key>
             <dict>
-                <key>url</key>
-                <string>%BASE_URL%/%match%</string>
                 <key>filename</key>
                 <string>%NAME%.dmg</string>
+                <key>url</key>
+                <string>https://sw.ekahau.com/download/pro/setup/EkahauAIPro-%version%.dmg</string>
             </dict>
         </dict>
         <dict>
@@ -48,14 +50,14 @@
             <string>CodeSignatureVerifier</string>
             <key>Arguments</key>
             <dict>
+                <key>requirement</key>
+                <string>identifier "com.ekahau.wifidesign.ess" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "456L77HQ44"</string>
                 <key>input_path</key>
-                <string>%pathname%/%NAME%.app</string>
-                <key>strict_verification</key>
-                <true/>
+                <string>%pathname%/*.app</string>
                 <key>deep_verification</key>
                 <true/>
-                <key>requirement</key>
-                <string>identifier "com.loom.desktop" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = QGD2ZPXZZG</string>
+                <key>strict_verification</key>
+                <true/>
             </dict>
         </dict>
     </array>

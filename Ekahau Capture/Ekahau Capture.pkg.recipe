@@ -3,26 +3,26 @@
 <plist version="1.0">
 <dict>
     <key>Description</key>
-    <string>Download the latest version of Atlassian Loom and turns it into a package.</string>
+    <string>Downloads the latest version of Ekahau Capture and turns it into a package.</string>
     <key>Identifier</key>
-    <string>com.github.jerefong.pkg.Loom</string>
+    <string>com.github.jrmfong.pkg.EkahauCapture</string>
     <key>Input</key>
     <dict>
         <key>NAME</key>
-        <string>Loom</string>
+        <string>Ekahau Capture</string>
     </dict>
     <key>ParentRecipe</key>
-    <string>com.github.jrmfong.download.Loom</string>
+    <string>com.github.jrmfong.download.EkahauCapture</string>
     <key>Process</key>
     <array>
         <dict>
-            <key>Processor</key>
-            <string>AppPkgCreator</string>
             <key>Arguments</key>
             <dict>
                 <key>app_path</key>
-                <string>%pathname%/*.app</string>
+                <string>%pathname%/%NAME%.app</string>
             </dict>
+            <key>Processor</key>
+            <string>AppPkgCreator</string>
         </dict>
     </array>
 </dict>

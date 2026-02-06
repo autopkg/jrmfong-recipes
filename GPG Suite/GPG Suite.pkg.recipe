@@ -5,7 +5,7 @@
     <key>Description</key>
     <string>Download and package the latest version of Logitech G Hub. GPG Mail bundle is disabled.</string>
     <key>Identifier</key>
-    <string>com.github.jerefong.pkg.GPGSuite</string>
+    <string>com.github.jrmfong.pkg.GPGSuite</string>
     <key>Input</key>
     <dict>
         <key>NAME</key>
