@@ -5,7 +5,7 @@
     <key>Description</key>
     <string>Download recipe for the latest available version of Atlassian Loom.</string>
     <key>Identifier</key>
-    <string>com.github.jerefong.download.Loom</string>
+    <string>com.github.jrmfong.download.Loom</string>
     <key>Input</key>
     <dict>
         <key>NAME</key>

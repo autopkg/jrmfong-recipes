@@ -12,7 +12,7 @@
         <string>Loom</string>
     </dict>
     <key>ParentRecipe</key>
-    <string>com.github.jere.download.Loom</string>
+    <string>com.github.jrmfong.download.Loom</string>
     <key>Process</key>
     <array>
         <dict>
