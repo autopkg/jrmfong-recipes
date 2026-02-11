@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>Description</key>
+        <string>Downloads the latest version of Shure Update Utility and creates a package.</string>
+        <key>Identifier</key>
+        <string>com.github.jrmfong.pkg.ShureUpdateUtility</string>
+        <key>Input</key>
+        <dict>
+            <key>NAME</key>
+            <string>Shure Update Utility</string>
+        </dict>
+        <key>MinimumVersion</key>
+        <string>0.5.0</string>
+        <key>ParentRecipe</key>
+        <string>com.github.jrmfong.download.ShureUpdateUtility</string>
+        <key>Process</key>
+        <array>
+            <dict>
+                <key>Processor</key>
+                <string>FlatPkgUnpacker</string>
+                <key>Arguments</key>
+                <dict>
+                    <key>flat_pkg_path</key>
+                    <string>%pathname%</string>
+                    <key>destination_path</key>
+                    <string>%RECIPE_CACHE_DIR%/PKG_UNPACK</string>
+                </dict>
+            </dict>
+            <dict>
+                <key>Processor</key>
+                <string>PkgPayloadUnpacker</string>
+                <key>Arguments</key>
+                <dict>
+                    <key>pkg_payload_path</key>
+                    <string>%RECIPE_CACHE_DIR%/PKG_UNPACK/temp.pkg/Payload</string>
+                    <key>destination_path</key>
+                    <string>%RECIPE_CACHE_DIR%/PAYLOAD_UNPACK</string>
+                </dict>
+            </dict>
+            <dict>
+                <key>Processor</key>
+                <string>Versioner</string>
+                <key>Arguments</key>
+                <dict>
+                    <key>input_plist_path</key>
+                    <string>%RECIPE_CACHE_DIR%/PAYLOAD_UNPACK/Applications/%NAME%.app/Contents/Info.plist</string>
+                </dict>
+            </dict>	
+            <dict>
+                <key>Processor</key>
+                <string>PathDeleter</string>
+                <key>Arguments</key>
+                <dict>
+                    <key>path_list</key>
+                    <array>
+                        <string>%RECIPE_CACHE_DIR%/PKG_UNPACK</string>
+                        <string>%RECIPE_CACHE_DIR%/PAYLOAD_UNPACK</string>
+                    </array>
+                </dict>
+            </dict>
+        </array>
+    </dict>
+</plist>
