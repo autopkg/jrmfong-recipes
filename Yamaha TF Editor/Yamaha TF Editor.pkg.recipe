@@ -78,7 +78,6 @@
 					<string>%RECIPE_CACHE_DIR%/payload</string>
 					<string>%RECIPE_CACHE_DIR%/unpack</string>
 					<string>%RECIPE_CACHE_DIR%/unzip</string>
-					<string>%RECIPE_CACHE_DIR%/downloads</string>
 				</array>
 			</dict>
 			<key>Processor</key>
