@@ -43,7 +43,7 @@
 			<key>Arguments</key>
 			<dict>
 				<key>input_plist_path</key>
-				<string>%RECIPE_CACHE_DIR%/pkg_payload/Applications/%NAME%.app/Contents/Info.plist</string>
+				<string>%RECIPE_CACHE_DIR%/pkg_payload/Applications/Shure Update Utility.app/Contents/Info.plist</string>
 			</dict>
 			<key>Processor</key>
 			<string>Versioner</string>
