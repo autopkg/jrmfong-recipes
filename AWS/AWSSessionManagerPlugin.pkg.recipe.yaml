@@ -1,0 +1,20 @@
+Description: Downloads and package the latest version of AWS Session Manager Plugin and renames the package.
+Identifier: com.github.jrmfong.recipes.pkg.AWSSessionManagerPlugin
+ParentRecipe: com.github.nstrauss.download.AWSSessionManagerPlugin
+MinimumVersion: "2.3"
+
+Input:
+  NAME: AWS Session Manager Plugin
+  DOWNLOAD_ARCH: "_arm64"
+
+Process:
+- Processor: URLTextSearcher
+  Arguments:
+    re_pattern: "[0-9.]+"
+    result_output_var_name: "version"
+    url: "https://api.github.com/repos/aws/session-manager-plugin/tags"
+
+- Processor: PkgCopier
+  Arguments:
+    source_pkg: "%pathname%"
+    pkg_path: "%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg"
