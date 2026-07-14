@@ -8,11 +8,9 @@ Input:
   DOWNLOAD_ARCH: "_arm64"
 
 Process:
-- Processor: URLTextSearcher
+- Processor: com.github.grahampugh.recipes.commonprocessors/PkgInfoReader
   Arguments:
-    re_pattern: "[0-9.]+"
-    result_output_var_name: "version"
-    url: "https://api.github.com/repos/aws/session-manager-plugin/tags"
+    source_pkg: "%pathname%"
 
 - Processor: PkgCopier
   Arguments:
