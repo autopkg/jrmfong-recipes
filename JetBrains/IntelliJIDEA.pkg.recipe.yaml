@@ -1,0 +1,15 @@
+Description: Downloads and package the latest version of IntelliJ IDEA and renames the package.
+Identifier: com.github.jrmfong.autopkg.pkg.IntelliJIDEA
+ParentRecipe: com.github.bnpl.autopkg.download.intellijidea
+MinimumVersion: "2.3"
+
+Input:
+  NAME: IntelliJ IDEA
+  # Intel architecture uses "mac", Apple Silicon architecture uses "macM1"
+  DOWNLOAD_ARCH: "macM1"
+
+Process:
+- Processor: AppPkgCreator
+  Arguments:
+    app_path: "%pathname%/*.app"
+    pkg_path: "%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg
