@@ -1,0 +1,17 @@
+Description: Downloads and package the latest version of AWS Session Manager Plugin and renames the package.
+Identifier: com.github.jrmfong.recipes.pkg.AdobeAcrobatDCUnifiedApplication
+ParentRecipe: com.github.dataJAR-recipes.download.Adobe Acrobat DC Unified Application
+MinimumVersion: "2.3"
+
+Input:
+  NAME: AdobeAcrobatDC
+
+Process:
+- Processor: com.github.grahampugh.recipes.commonprocessors/PkgInfoReader
+  Arguments:
+    source_pkg: "%pathname%"
+
+- Processor: PkgCopier
+  Arguments:
+    source_pkg: "%pathname%"
+    pkg_path: "%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg"
