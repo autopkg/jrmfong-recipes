@@ -7,10 +7,9 @@ MinimumVersion: '2.9'
 
 Input:
   NAME: Smooze Pro
-  SOFTWARE_TITLE: '%NAME%'
 
 Process:
   - Processor: AppPkgCreator
     Arguments:
-      app_path: '%RECIPE_CACHE_DIR%/downloads/%SOFTWARE_TITLE%.dmg/Bruno.app'
-      pkg_path: '%RECIPE_CACHE_DIR%/%SOFTWARE_TITLE%-%version%.pkg'
+      app_path: '%RECIPE_CACHE_DIR%/downloads/%NAME%.dmg/%NAME%.app'
+      pkg_path: '%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg'
