@@ -1,0 +1,16 @@
+Description: |
+  Downloads the most recent signed release pkg of Smooze Pro.
+
+Identifier: com.github.jrmfong.pkg.SmoozePro
+ParentRecipe: com.github.jrmfong.download.SmoozePro
+MinimumVersion: '2.9'
+
+Input:
+  NAME: Smooze Pro
+  SOFTWARE_TITLE: '%NAME%'
+
+Process:
+  - Processor: AppPkgCreator
+    Arguments:
+      app_path: '%RECIPE_CACHE_DIR%/downloads/%SOFTWARE_TITLE%.dmg/Bruno.app'
+      pkg_path: '%RECIPE_CACHE_DIR%/%SOFTWARE_TITLE%-%version%.pkg'
