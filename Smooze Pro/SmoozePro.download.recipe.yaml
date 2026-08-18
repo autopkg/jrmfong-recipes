@@ -1,5 +1,5 @@
 Description: |
-  Downloads the most recent signed release pkg of Smooze Pro.
+  Downloads the most recent dmg of Smooze Pro.
 
 Identifier: com.github.jrmfong.download.SmoozePro
 MinimumVersion: '2.9'
