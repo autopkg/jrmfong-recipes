@@ -1,0 +1,15 @@
+Description: |
+  Downloads the most recent signed release pkg of Jamf Setup Checklist.
+
+Identifier: com.github.jrmfong.pkg.JamfSetupChecklist
+ParentRecipe: com.github.jrmfong.download.JamfSetupChecklist
+MinimumVersion: "2.9"
+
+Input:
+  NAME: Jamf Setup Checklist
+
+Process:
+  - Processor: PkgCopier
+    Arguments:
+      source_pkg: "%pathname%"
+      pkg_path: "%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg"
