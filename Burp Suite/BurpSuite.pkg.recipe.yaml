@@ -1,0 +1,14 @@
+Description: Downloads and package the latest version of Burp Suite and renames the package.
+Identifier: com.github.dataJAR-recipes.download.Burp Suite Professional
+ParentRecipe: com.github.jrmfong.pkg.BurpSuite
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Burp Suite
+  DOWNLOAD_ARCH: "MacOsArm64"
+
+Process:
+  - Processor: AppPkgCreator
+    Arguments:
+      app_path: "%pathname%/Burp Suite.app"
+      pkg_path: '%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg'
