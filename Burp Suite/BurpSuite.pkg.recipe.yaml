@@ -11,4 +11,4 @@ Process:
   - Processor: AppPkgCreator
     Arguments:
       app_path: "%pathname%/Burp Suite.app"
-      pkg_path: '%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg'
+      pkg_path: "%RECIPE_CACHE_DIR%/%NAME%.pkg"
