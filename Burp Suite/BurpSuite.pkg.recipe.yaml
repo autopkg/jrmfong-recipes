@@ -1,7 +1,7 @@
 Description: Downloads and package the latest version of Burp Suite and renames the package.
-Identifier: com.github.dataJAR-recipes.download.Burp Suite Professional
-ParentRecipe: com.github.jrmfong.pkg.BurpSuite
-MinimumVersion: "1.0.3"
+Identifier: com.github.jrmfong.pkg.BurpSuite
+ParentRecipe: com.github.dataJAR-recipes.download.Burp Suite Professional
+MinimumVersion: "2.3"
 
 Input:
   NAME: Burp Suite
