@@ -51,31 +51,7 @@
 				<key>find_method</key>
 				<string>glob</string>
 				<key>pattern</key>
-				<string>%RECIPE_CACHE_DIR%/extracted/Designer-macOS-*/ShureDesigner6Installer_mac.*.zip</string>
-			</dict>
-			<key>Processor</key>
-			<string>FileFinder</string>
-		</dict>
-		<dict>
-			<key>Arguments</key>
-			<dict>
-				<key>archive_path</key>
-				<string>%found_filename%</string>
-				<key>destination_path</key>
-				<string>%RECIPE_CACHE_DIR%/installer</string>
-				<key>purge_destination</key>
-				<true/>
-			</dict>
-			<key>Processor</key>
-			<string>Unarchiver</string>
-		</dict>
-		<dict>
-			<key>Arguments</key>
-			<dict>
-				<key>find_method</key>
-				<string>glob</string>
-				<key>pattern</key>
-				<string>%RECIPE_CACHE_DIR%/installer/ShureDesigner6Installer_mac.*.app</string>
+				<string>%RECIPE_CACHE_DIR%/extracted/ShureDesigner6Installer_mac.*.app</string>
 			</dict>
 			<key>Processor</key>
 			<string>FileFinder</string>
