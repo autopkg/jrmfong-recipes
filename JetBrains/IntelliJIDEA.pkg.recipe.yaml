@@ -1,5 +1,5 @@
 Description: Downloads and package the latest version of IntelliJ IDEA and renames the package.
-Identifier: com.github.jrmfong.autopkg.pkg.IntelliJIDEA
+Identifier: com.github.jrmfong.pkg.IntelliJIDEA
 ParentRecipe: com.github.bnpl.autopkg.download.intellijidea
 MinimumVersion: "2.3"
 
