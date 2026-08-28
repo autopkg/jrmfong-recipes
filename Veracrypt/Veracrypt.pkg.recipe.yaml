@@ -1,5 +1,5 @@
 Description: Downloads and package the latest version of VeraCrypt and renames the package.
-Identifier: com.github.jrmfong.recipes.pkg.Veracrypt
+Identifier: com.github.jrmfong.pkg.Veracrypt
 ParentRecipe: com.github.dataJAR-recipes.download.VeraCrypt
 MinimumVersion: "2.3"
 
