@@ -38,4 +38,4 @@ Process:
         - "Developer ID Certification Authority"
         - "Apple Root CA"
       deep_verification: true
-      strict_verification: tru
+      strict_verification: true
