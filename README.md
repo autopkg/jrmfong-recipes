@@ -1,8 +1,8 @@
 # jrmfong-recipes
 
-[AutoPkg](https://github.com/autopkg/autopkg) recipes for macOS software packaging, mostly apps not covered elsewhere in the AutoPkg org.
+[AutoPkg](https://github.com/autopkg/autopkg) recipes for macOS software packaging — mostly apps not covered elsewhere in the AutoPkg org.
 
-All recipe identifiers start with `com.github.jrmfong.`, though a few use a longer prefix (`com.github.jrmfong.recipes.`, `com.github.jrmfong.autopkg.`) — see the identifiers in the table below.
+Every recipe produces an installer `.pkg`, so the output drops straight into Jamf Pro, Munki, Intune, or any other deployment tool.
 
 ## Usage
 
@@ -11,38 +11,78 @@ autopkg repo-add jrmfong-recipes
 autopkg run -v com.github.jrmfong.pkg.SmoozePro
 ```
 
-Recipes are written in both plist (`.recipe`) and YAML (`.recipe.yaml`) format. All YAML recipes require AutoPkg 2.3 or newer; the ones that use YAML-only features require 2.9.
+Recipe identifiers all start with `com.github.jrmfong.`, but the segment after that varies — some use `com.github.jrmfong.recipes.` or `com.github.jrmfong.autopkg.`. Copy the exact identifier from the table below rather than guessing.
+
+### Requirements
+
+- **AutoPkg 2.3+** for the YAML recipes; **2.9+** for the ones that use `URLDownloaderPython` (Jamf Setup Checklist, MyDPD Customer, Smooze Pro).
+- **Parent repos.** Recipes with an external parent need that repo added first:
+
+  ```sh
+  autopkg repo-add dataJAR-recipes    # Adobe Acrobat, Burp Suite, VeraCrypt
+  autopkg repo-add nstrauss-recipes   # AWS Session Manager Plugin
+  autopkg repo-add grahampugh-recipes # PkgInfoReader — Adobe Acrobat, AWS, VeraCrypt
+  ```
+
+  IntelliJ IDEA parents off `com.github.bnpl.autopkg.download.intellijidea`, which is not in the AutoPkg org — add that repo by URL.
 
 ## Recipes
 
 | Software | Recipes | `pkg` identifier | Parent (external) |
 | --- | --- | --- | --- |
-| Adobe Acrobat DC Unified Application | `pkg` | `com.github.jrmfong.recipes.pkg.AdobeAcrobatDCUnifiedApplication` | `com.github.dataJAR-recipes.download.Adobe Acrobat DC Unified Application` |
+| Adobe Acrobat DC Unified Application | `pkg` | `com.github.jrmfong.pkg.AdobeAcrobatDCUnifiedApplication` | `com.github.dataJAR-recipes.download.Adobe Acrobat DC Unified Application` |
 | AWS Session Manager Plugin | `pkg` | `com.github.jrmfong.recipes.pkg.AWSSessionManagerPlugin` | `com.github.nstrauss.download.AWSSessionManagerPlugin` |
 | Burp Suite Professional | `pkg` | `com.github.jrmfong.pkg.BurpSuite` | `com.github.dataJAR-recipes.download.Burp Suite Professional` |
 | CueTimer | `download`, `pkg` | `com.github.jrmfong.pkg.CueTimer` | |
 | Ekahau Capture | `download`, `pkg` | `com.github.jrmfong.pkg.EkahauCapture` | |
-| IntelliJ IDEA (JetBrains) | `pkg` | `com.github.jrmfong.autopkg.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
+| IntelliJ IDEA | `pkg` | `com.github.jrmfong.autopkg.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
 | Jamf Setup Checklist | `download`, `pkg` | `com.github.jrmfong.pkg.JamfSetupChecklist` | |
 | MyDPD Customer | `download`, `pkg` | `com.github.jrmfong.pkg.MyDPDCustomer` | |
-| Shure Designer | `download`, `pkg` | `com.github.jrmfong.pkg.ShureDesigner6` | |
+| Shure Designer 6 | `download`, `pkg` | `com.github.jrmfong.pkg.ShureDesigner6` | |
 | Shure Update Utility | `download`, `pkg` | `com.github.jrmfong.pkg.ShureUpdateUtility` | |
 | Smooze Pro | `download`, `pkg` | `com.github.jrmfong.pkg.SmoozePro` | |
+| VeraCrypt | `pkg` | `com.github.jrmfong.recipes.pkg.Veracrypt` | `com.github.dataJAR-recipes.download.VeraCrypt` |
 | Yamaha TF Editor | `download`, `pkg` | `com.github.jrmfong.pkg.YamahaTFEditor` | |
 
-`download` recipes fetch and code-signature-verify the vendor release; `pkg` recipes build an installer package from it. Recipes with an external parent depend on that repo being added first (`autopkg repo-add <repo>`).
+`download` recipes fetch the vendor release and verify its code signature; `pkg` recipes build the installer package from it. Each app lives in its own directory, and recipes are written in both plist (`.recipe`) and YAML (`.recipe.yaml`) format.
 
-Notes on individual recipes:
+### Architecture overrides
 
-- **Shure Designer** — recipe filenames drop the version, but the identifiers are still suffixed `ShureDesigner6`.
-- **Burp Suite Professional** — defaults to `DOWNLOAD_ARCH: MacOsArm64` (Apple silicon). Override that input for Intel.
-- **Jamf Setup Checklist** — sourced from GitHub releases via `GitHubReleasesInfoProvider`.
+Three recipes default to **Apple silicon**. Override `DOWNLOAD_ARCH` for Intel:
+
+| Recipe | Default (Apple silicon) | Intel |
+| --- | --- | --- |
+| AWS Session Manager Plugin | `_arm64` | `""` |
+| Burp Suite Professional | `MacOsArm64` | `MacOsx` |
+| IntelliJ IDEA | `macM1` | `mac` |
+
+```sh
+autopkg run -v com.github.jrmfong.autopkg.pkg.IntelliJIDEA -k DOWNLOAD_ARCH=mac
+```
+
+Check the parent download recipe for the exact values it accepts before overriding.
+
+### Notes on individual recipes
+
+- **Jamf Setup Checklist** — sourced from the [Jamf-Concepts/setup-checklist](https://github.com/Jamf-Concepts/setup-checklist) GitHub releases via `GitHubReleasesInfoProvider`.
+- **Shure Designer 6** — the vendor ships a nested ZIP containing an InstallBuilder app rather than a drag-install `.app`. The `pkg` recipe wraps that installer and runs it unattended from a `postinstall` script, so the resulting package is a bootstrapper, not a payload copy.
+- **Shure Update Utility** and **Yamaha TF Editor** — the vendor already ships a signed flat `.pkg`. These recipes unpack it only to read a version number, then re-copy the original vendor package.
+- **Jamf Setup Checklist**, **MyDPD Customer**, **Smooze Pro** — use `URLDownloaderPython` with a browser `User-Agent`, and stop early when the download is unchanged. Set `BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED=True` to force the rest of the recipe to run against a cached download.
+- **Shure Designer 6** — the filenames drop the version, but the identifiers keep the `6` suffix (`...ShureDesigner6`).
 
 ## Contributing
 
-The repo uses [pre-commit](https://pre-commit.com) with [pre-commit-macadmin](https://github.com/homebysix/pre-commit-macadmin) to lint recipes (`--strict`), enforce the `com.github.jrmfong.` prefix, reject overrides and trust info, and format plists:
+The repo uses [pre-commit](https://pre-commit.com) with [pre-commit-macadmin](https://github.com/homebysix/pre-commit-macadmin) to lint recipes in `--strict` mode, enforce the `com.github.jrmfong.` identifier prefix, reject overrides and trust info, and format plists:
 
 ```sh
 pre-commit install
 pre-commit run --all-files
 ```
+
+When adding a recipe:
+
+1. Put it in a directory named after the software.
+2. Prefix the identifier with `com.github.jrmfong.` and match the existing `download` / `pkg` naming.
+3. Verify the code signature in the `download` recipe — pin the Team ID and bundle identifier, not just the anchor.
+4. Set `MinimumVersion` to the lowest AutoPkg release the processors actually need.
+5. Add the recipe to the table above.
