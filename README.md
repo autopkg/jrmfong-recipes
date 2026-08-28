@@ -11,7 +11,7 @@ autopkg repo-add jrmfong-recipes
 autopkg run -v com.github.jrmfong.pkg.SmoozePro
 ```
 
-Recipe identifiers all start with `com.github.jrmfong.`, but the segment after that varies — some use `com.github.jrmfong.recipes.` or `com.github.jrmfong.autopkg.`. Copy the exact identifier from the table below rather than guessing.
+Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `com.github.jrmfong.download.SmoozePro` and `com.github.jrmfong.pkg.SmoozePro`.
 
 ### Requirements
 
@@ -31,36 +31,36 @@ Recipe identifiers all start with `com.github.jrmfong.`, but the segment after t
 | Software | Recipes | `pkg` identifier | Parent (external) |
 | --- | --- | --- | --- |
 | Adobe Acrobat DC Unified Application | `pkg` | `com.github.jrmfong.pkg.AdobeAcrobatDCUnifiedApplication` | `com.github.dataJAR-recipes.download.Adobe Acrobat DC Unified Application` |
-| AWS Session Manager Plugin | `pkg` | `com.github.jrmfong.recipes.pkg.AWSSessionManagerPlugin` | `com.github.nstrauss.download.AWSSessionManagerPlugin` |
+| AWS Session Manager Plugin | `pkg` | `com.github.jrmfong.pkg.AWSSessionManagerPlugin` | `com.github.nstrauss.download.AWSSessionManagerPlugin` |
 | Burp Suite Professional | `pkg` | `com.github.jrmfong.pkg.BurpSuite` | `com.github.dataJAR-recipes.download.Burp Suite Professional` |
 | CueTimer | `download`, `pkg` | `com.github.jrmfong.pkg.CueTimer` | |
 | Ekahau Capture | `download`, `pkg` | `com.github.jrmfong.pkg.EkahauCapture` | |
-| IntelliJ IDEA | `pkg` | `com.github.jrmfong.autopkg.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
+| IntelliJ IDEA | `pkg` | `com.github.jrmfong.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
 | Jamf Setup Checklist | `download`, `pkg` | `com.github.jrmfong.pkg.JamfSetupChecklist` | |
 | MyDPD Customer | `download`, `pkg` | `com.github.jrmfong.pkg.MyDPDCustomer` | |
 | Shure Designer 6 | `download`, `pkg` | `com.github.jrmfong.pkg.ShureDesigner6` | |
 | Shure Update Utility | `download`, `pkg` | `com.github.jrmfong.pkg.ShureUpdateUtility` | |
 | Smooze Pro | `download`, `pkg` | `com.github.jrmfong.pkg.SmoozePro` | |
-| VeraCrypt | `pkg` | `com.github.jrmfong.recipes.pkg.Veracrypt` | `com.github.dataJAR-recipes.download.VeraCrypt` |
+| VeraCrypt | `pkg` | `com.github.jrmfong.pkg.Veracrypt` | `com.github.dataJAR-recipes.download.VeraCrypt` |
 | Yamaha TF Editor | `download`, `pkg` | `com.github.jrmfong.pkg.YamahaTFEditor` | |
 
 `download` recipes fetch the vendor release and verify its code signature; `pkg` recipes build the installer package from it. Each app lives in its own directory, and recipes are written in both plist (`.recipe`) and YAML (`.recipe.yaml`) format.
 
 ### Architecture overrides
 
-Three recipes default to **Apple silicon**. Override `DOWNLOAD_ARCH` for Intel:
+Three recipes pin `DOWNLOAD_ARCH` to an **Apple silicon** build. Override the input to package for Intel:
 
-| Recipe | Default (Apple silicon) | Intel |
-| --- | --- | --- |
-| AWS Session Manager Plugin | `_arm64` | `""` |
-| Burp Suite Professional | `MacOsArm64` | `MacOsx` |
-| IntelliJ IDEA | `macM1` | `mac` |
+| Recipe | `DOWNLOAD_ARCH` default |
+| --- | --- |
+| AWS Session Manager Plugin | `_arm64` |
+| Burp Suite Professional | `MacOsArm64` |
+| IntelliJ IDEA | `macM1` (Intel: `mac`) |
 
 ```sh
-autopkg run -v com.github.jrmfong.autopkg.pkg.IntelliJIDEA -k DOWNLOAD_ARCH=mac
+autopkg run -v com.github.jrmfong.pkg.IntelliJIDEA -k DOWNLOAD_ARCH=mac
 ```
 
-Check the parent download recipe for the exact values it accepts before overriding.
+The accepted values are defined by each parent download recipe, not here — check the parent for the Intel equivalent before overriding.
 
 ### Notes on individual recipes
 
