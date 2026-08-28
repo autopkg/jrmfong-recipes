@@ -143,7 +143,7 @@ an API, `URLTextSearcher` is enough.
   them exists
 - use no spaces in a filename, even when `Input/NAME` has one. The app "Tight
   Studio" gets `TightStudio.pkg.recipe.yaml`
-- write the identifier as `com.github.homebysix.<type>.<App>`, with no spaces
+- write the identifier as `com.github.jrmfong.<type>.<App>`, with no spaces
 - match `MinimumVersion`, `Input/NAME`, `ParentRecipe` and the processor order to
   the recipes next to it
 - set `MinimumVersion` to the highest AutoPkg version the whole recipe chain
