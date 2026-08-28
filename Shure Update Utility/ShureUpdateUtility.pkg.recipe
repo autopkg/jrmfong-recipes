@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>Description</key>
-	<string>Downloads the latest version of CueTimer and creates a package.</string>
+	<string>Downloads the latest version of Shure Update Utility and creates a package.</string>
 	<key>Identifier</key>
 	<string>com.github.jrmfong.pkg.ShureUpdateUtility</string>
 	<key>Input</key>
