@@ -1,0 +1,41 @@
+Description: |
+  Downloads the most recent signed release pkg of snowflake snowSQL.
+
+Identifier: com.github.jrmfong.download.snowSQL
+MinimumVersion: "2.9"
+
+Input:
+  NAME: snowSQL
+  DOWNLOAD_URL: https://www.snowflake.com/en/developers/downloads/snowsql/
+  DOWNLOAD_MISSING_FILE: "True"
+  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
+
+Process:
+  - Processor: URLTextSearcher
+    Arguments:
+      url: "%DOWNLOAD_URL%"
+      re_pattern: https://sfc-repo\.snowflakecomputing\.com/snowsql/bootstrap/[0-9.]+/darwin_arm64/snowsql-[0-9.]+-darwin_arm64\.pkg
+
+  - Processor: URLDownloaderPython
+    Arguments:
+      download_missing_file: "%DOWNLOAD_MISSING_FILE%"
+      filename: "%NAME%.pkg"
+      url: "%match%"
+      request_headers:
+        User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+
+  - Processor: EndOfCheckPhase
+
+  - Processor: StopProcessingIf
+    Arguments:
+      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      deep_verification: true
+      strict_verification: true
+      input_path: "%RECIPE_CACHE_DIR%/downloads/%NAME%.pkg"
+      expected_authority_names:
+       - "Developer ID Installer: Snowflake Computing INC. (W4NT6CRQ7U)"
+       - "Developer ID Certification Authority"
+       - "Apple Root CA"
