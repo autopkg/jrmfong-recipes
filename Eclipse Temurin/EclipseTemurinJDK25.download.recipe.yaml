@@ -29,8 +29,8 @@ Process:
   - Processor: CodeSignatureVerifier
     Arguments:
       input_path: "%pathname%"
-      
       strict_verification: true
+      deep_verification: true
       expected_authority_names:
         - "Developer ID Installer: Eclipse Foundation, Inc. (JCDTMS22B4)"
         - "Developer ID Certification Authority"
