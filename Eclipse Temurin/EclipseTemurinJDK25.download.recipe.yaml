@@ -1,0 +1,37 @@
+Description: |
+  Downloads the latest signed installer package of Eclipse Temurin JDK 25.
+
+  The source is the GitHub releases of adoptium/temurin25-binaries. Pre-release
+  builds, tagged "-ea-beta", are skipped.
+
+  ARCH defaults to aarch64, for Apple silicon. Set it to x64 for Intel.
+
+Identifier: com.github.jrmfong.download.EclipseTemurinJDK25
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Eclipse Temurin JDK 25
+  ARCH: aarch64
+  GITHUB_REPO: adoptium/temurin25-binaries
+
+Process:
+  - Processor: GitHubReleasesInfoProvider
+    Arguments:
+      github_repo: "%GITHUB_REPO%"
+      asset_regex: OpenJDK25U-jdk_%ARCH%_mac_hotspot_[0-9._]+\.pkg$
+
+  - Processor: URLDownloader
+    Arguments:
+      filename: "%NAME%.pkg"
+
+  - Processor: EndOfCheckPhase
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%pathname%"
+      
+      strict_verification: true
+      expected_authority_names:
+        - "Developer ID Installer: Eclipse Foundation, Inc. (JCDTMS22B4)"
+        - "Developer ID Certification Authority"
+        - "Apple Root CA"
