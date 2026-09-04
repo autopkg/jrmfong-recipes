@@ -11,7 +11,7 @@ ParentRecipe: com.github.jrmfong.download.EclipseTemurinJDK25
 MinimumVersion: "2.7.6"
 
 Input:
-  NAME: EclipseTemurinJDK25
+  NAME: Eclipse Temurin JDK 25
 
 Process:
   - Processor: com.github.grahampugh.recipes.commonprocessors/PkgInfoReader
