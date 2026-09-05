@@ -13,6 +13,7 @@ Input:
   NAME: Eclipse Temurin JDK 25
   ARCH: aarch64
   GITHUB_REPO: adoptium/temurin25-binaries
+  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
 
 Process:
   - Processor: GitHubReleasesInfoProvider
