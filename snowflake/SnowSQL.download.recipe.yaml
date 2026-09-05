@@ -1,11 +1,11 @@
 Description: |
   Downloads the most recent signed release pkg of snowflake snowSQL.
 
-Identifier: com.github.jrmfong.download.snowSQL
+Identifier: com.github.jrmfong.download.SnowSQL
 MinimumVersion: "2.9"
 
 Input:
-  NAME: snowSQL
+  NAME: SnowSQL
   DOWNLOAD_URL: https://www.snowflake.com/en/developers/downloads/snowsql/
   DOWNLOAD_MISSING_FILE: "True"
   BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
