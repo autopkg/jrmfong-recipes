@@ -4,19 +4,24 @@ MinimumVersion: "2.3"
 
 Input:
   NAME: Yamaha TF Editor
+  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
 
 Process:
   - Processor: URLTextSearcher
     Arguments:
-      re_pattern: id="d([0-9]+)">TF Editor
+      re_pattern: 'id="d([0-9]+)">TF Editor'
       url: https://uk.yamaha.com/en/support/updates/tf_edt_mac.html
 
   - Processor: URLDownloader
     Arguments:
       filename: "%NAME%.zip"
-      url: https://uk.yamaha.com/en/download/files/%match%/
+      url: "https://uk.yamaha.com/en/download/files/%match%/"
 
   - Processor: EndOfCheckPhase
+
+  - Processor: StopProcessingIf
+    Arguments:
+      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
 
   - Processor: Unarchiver
     Arguments:
