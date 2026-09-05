@@ -1,24 +1,22 @@
-Description: |
-  Downloads the most recent signed release pkg of Ekahau Capture.
-
+Description: Downloads the current signed release DMG of Ekahau Capture.
 Identifier: com.github.jrmfong.download.EkahauCapture
 MinimumVersion: "2.9"
 
 Input:
   NAME: Ekahau Capture
   SEARCH_URL: https://sw.ekahau.com/download/capture/
-  DOWNLOAD_MISSING_FILE: "True"
   BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
 
 Process:
   - Processor: URLTextSearcher
     Arguments:
-      url: %SEARCH_URL%
-      re_pattern: "https://sw.ekahau.com/download/capture/setup/EkahauCapture-[0-9.]+.dmg"
+      url: "%SEARCH_URL%"
+      re_pattern: 'https://sw\.ekahau\.com/download/capture/setup/EkahauCapture-[0-9]+(?:\.[0-9]+)*\.dmg'
+      request_headers:
+        User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 
   - Processor: URLDownloaderPython
     Arguments:
-      download_missing_file: "%DOWNLOAD_MISSING_FILE%"
       filename: "%NAME%.dmg"
       url: "%match%"
       request_headers:
@@ -35,4 +33,4 @@ Process:
       input_path: "%pathname%/*.app"
       strict_verification: true
       deep_verification: true
-      requirement: identifier "com.ekahau.capture" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "456L77HQ44"
+      requirement: 'identifier "com.ekahau.capture" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "456L77HQ44"'
