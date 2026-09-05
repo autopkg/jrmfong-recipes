@@ -1,0 +1,25 @@
+Description: Download and extract Shure Update Utility.
+Identifier: com.github.jrmfong.download.ShureUpdateUtility
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Shure Update Utility
+  DOWNLOAD_URL: https://www.shure.com/en-US/sw/suu-mac
+
+Process:
+  - Processor: URLDownloader
+    Arguments:
+      filename: "%NAME%.pkg"
+      url: "%DOWNLOAD_URL%"
+
+  - Processor: EndOfCheckPhase
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%pathname%"
+      strict_verification: true
+      deep_verification: true
+      expected_authority_names:
+        - "Developer ID Installer: Shure Incorporated (4K6323CXC4)"
+        - Developer ID Certification Authority
+        - Apple Root CA
