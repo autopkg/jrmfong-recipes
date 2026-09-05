@@ -1,0 +1,33 @@
+Description: Downloads the latest version of Shure Update Utility and creates a package.
+Identifier: com.github.jrmfong.pkg.ShureUpdateUtility
+ParentRecipe: com.github.jrmfong.download.ShureUpdateUtility
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Shure Update Utility
+
+Process:
+  - Processor: FlatPkgUnpacker
+    Arguments:
+      destination_path: "%RECIPE_CACHE_DIR%/pkg_unpack/"
+      flat_pkg_path: "%pathname%"
+
+  - Processor: PkgPayloadUnpacker
+    Arguments:
+      destination_path: "%RECIPE_CACHE_DIR%/pkg_payload/"
+      pkg_payload_path: "%RECIPE_CACHE_DIR%/pkg_unpack/temp.pkg/Payload"
+
+  - Processor: Versioner
+    Arguments:
+      input_plist_path: "%RECIPE_CACHE_DIR%/pkg_payload/Applications/Shure Update Utility.app/Contents/Info.plist"
+
+  - Processor: PkgCopier
+    Arguments:
+      pkg_path: "%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg"
+      source_pkg: "%pathname%"
+
+  - Processor: PathDeleter
+    Arguments:
+      path_list:
+        - "%RECIPE_CACHE_DIR%/pkg_unpack/"
+        - "%RECIPE_CACHE_DIR%/pkg_payload/"
