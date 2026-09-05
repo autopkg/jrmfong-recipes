@@ -1,0 +1,40 @@
+Description: |
+  Download and extract Shure Designer 6 ZIP file.
+
+Identifier: com.github.jrmfong.download.ShureDesigner6
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Shure Designer 6
+  DOWNLOAD_URL: https://www.shure.com/en-US/sw/designer-mac
+  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
+
+Process:
+  - Processor: URLDownloader
+    Arguments:
+      filename: ShureDesigner6.zip
+      url: "%DOWNLOAD_URL%"
+
+  - Processor: EndOfCheckPhase
+
+  - Processor: StopProcessingIf
+    Arguments:
+      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
+
+  - Processor: Unarchiver
+    Arguments:
+      archive_path: "%pathname%"
+      destination_path: "%RECIPE_CACHE_DIR%/extracted"
+      purge_destination: true
+
+  - Processor: FileFinder
+    Arguments:
+      find_method: glob
+      pattern: "%RECIPE_CACHE_DIR%/extracted/ShureDesigner6Installer_mac.*.app"
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%found_filename%"
+      strict_verification: true
+      deep_verification: true
+      requirement: identifier "com.shure.designer-6" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "4K6323CXC4"
