@@ -1,10 +1,10 @@
 Description: Downloads and package the latest version of snowflake snowSQL and renames the package.
-Identifier: com.github.jrmfong.pkg.snowSQL
-ParentRecipe: com.github.jrmfong.download.snowSQL
+Identifier: com.github.jrmfong.pkg.SnowSQL
+ParentRecipe: com.github.jrmfong.download.SnowSQL
 MinimumVersion: "2.9"
 
 Input:
-  NAME: snowSQL
+  NAME: SnowSQL
 
 Process:
 - Processor: com.github.grahampugh.recipes.commonprocessors/PkgInfoReader
