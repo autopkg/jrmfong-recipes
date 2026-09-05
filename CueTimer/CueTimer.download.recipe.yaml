@@ -5,7 +5,7 @@ Identifier: com.github.jrmfong.download.CueTimer
 MinimumVersion: "2.9"
 
 Input:
-  NAME: MyDPD Customer
+  NAME: CueTimer
   DOWNLOAD_URL: https://www.presentationtools.com/wp-content/uploads/cuetimer-mac/CueTimer.dmg
   DOWNLOAD_MISSING_FILE: "True"
   BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
