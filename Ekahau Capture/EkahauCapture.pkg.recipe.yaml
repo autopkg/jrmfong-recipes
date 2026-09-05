@@ -1,0 +1,12 @@
+Description: Downloads and package the latest version of Ekahau Capture and renames the package.
+Identifier: com.github.jrmfong.pkg.EkahauCapture
+ParentRecipe: com.github.jrmfong.download.EkahauCapture
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Ekahau Capture
+
+Process:
+  - Processor: AppPkgCreator
+    Arguments:
+      app_path: "%pathname%/*.app"
