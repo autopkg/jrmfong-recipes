@@ -1,0 +1,12 @@
+Description: Downloads and package the latest version of CueTimer and renames the package.
+Identifier: com.github.jrmfong.pkg.CueTimer
+ParentRecipe: com.github.jrmfong.download.CueTimer
+MinimumVersion: "2.3"
+
+Input:
+  NAME: CueTimer
+
+Process:
+  - Processor: AppPkgCreator
+    Arguments:
+      app_path: "%pathname%/*.app"
