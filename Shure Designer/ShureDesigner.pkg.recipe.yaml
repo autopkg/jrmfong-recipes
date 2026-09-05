@@ -1,0 +1,64 @@
+Description: Downloads the latest version of Shure Designer 6 and creates a package.
+Identifier: com.github.jrmfong.pkg.ShureDesigner6
+ParentRecipe: com.github.jrmfong.download.ShureDesigner6
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Shure Designer 6
+
+Process:
+  - Processor: PlistReader
+    Arguments:
+      info_path: "%found_filename%/Contents/Info.plist"
+      plist_keys:
+        CFBundleIdentifier: bundleid
+        CFBundleShortVersionString: version
+
+  - Processor: PkgRootCreator
+    Arguments:
+      pkgdirs:
+        private: "0777"
+        private/tmp: "0777"
+        private/tmp/shuredesigner: "0777"
+      pkgroot: "%RECIPE_CACHE_DIR%/%NAME%"
+
+  - Processor: Copier
+    Arguments:
+      destination_path: "%pkgroot%/private/tmp/shuredesigner/Installer.app"
+      overwrite: true
+      source_path: "%found_filename%"
+
+  - Processor: PkgRootCreator
+    Arguments:
+      pkgdirs: {}
+      pkgroot: "%RECIPE_CACHE_DIR%/scripts"
+
+  - Processor: FileCreator
+    Arguments:
+      file_content: |
+        #!/bin/zsh
+        # Install Shure Designer 6
+        "/private/tmp/shuredesigner/Installer.app/Contents/MacOS/installbuilder.sh" --mode unattended --unattendedmodeui none 
+      file_mode: "0755"
+      file_path: "%RECIPE_CACHE_DIR%/scripts/postinstall"
+
+  - Processor: PkgCreator
+    Arguments:
+      pkg_request:
+        chown:
+          - group: admin
+            mode: "0777"
+            path: private/tmp/shuredesigner/
+            user: root
+        id: "%bundleid%custom"
+        options: purge_ds_store
+        pkgname: "%NAME%-%version%"
+        pkgroot: "%RECIPE_CACHE_DIR%/%NAME%"
+        scripts: "%RECIPE_CACHE_DIR%/scripts"
+        version: "%version%"
+
+  - Processor: PathDeleter
+    Arguments:
+      path_list:
+        - "%RECIPE_CACHE_DIR%/%NAME%"
+        - "%RECIPE_CACHE_DIR%/scripts"
