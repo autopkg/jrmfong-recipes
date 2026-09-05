@@ -13,7 +13,7 @@ Input:
 Process:
   - Processor: URLTextSearcher
     Arguments:
-      url: %SEARCH_URLL%
+      url: %SEARCH_URL%
       re_pattern: "https://sw.ekahau.com/download/capture/setup/EkahauCapture-[0-9.]+.dmg"
 
   - Processor: URLDownloaderPython
