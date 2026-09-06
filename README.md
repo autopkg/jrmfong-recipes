@@ -15,13 +15,13 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 
 ### Requirements
 
-- AutoPkg 2.3 or later. Every recipe is YAML, which needs 2.3 as a minimum. AutoPkg 2.9 or later for the ones that use `URLDownloaderPython`: CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro and snowSQL.
+- AutoPkg 2.3 or later. Every recipe is YAML, which needs 2.3 as a minimum. AutoPkg 2.9 or later for the ones that use `URLDownloaderPython`: CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro and SnowSQL.
 - Parent repos. Recipes with an external parent need that repo added first:
 
   ```sh
   autopkg repo-add dataJAR-recipes    # Adobe Acrobat, Burp Suite, VeraCrypt
   autopkg repo-add nstrauss-recipes   # AWS Session Manager Plugin
-  autopkg repo-add grahampugh-recipes # PkgInfoReader - Adobe Acrobat, AWS, VeraCrypt, snowSQL, Yamaha TF Editor
+  autopkg repo-add grahampugh-recipes # PkgInfoReader - Adobe Acrobat, AWS, VeraCrypt, SnowSQL, Yamaha TF Editor
   ```
 
   IntelliJ IDEA parents off `com.github.bnpl.autopkg.download.intellijidea`, which is not in the AutoPkg org. Add that repo by URL.
@@ -42,7 +42,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | Shure Designer 6 | `download`, `pkg` | `com.github.jrmfong.pkg.ShureDesigner6` | |
 | Shure Update Utility | `download`, `pkg` | `com.github.jrmfong.pkg.ShureUpdateUtility` | |
 | Smooze Pro | `download`, `pkg` | `com.github.jrmfong.pkg.SmoozePro` | |
-| snowSQL | `download`, `pkg` | `com.github.jrmfong.pkg.snowSQL` | |
+| SnowSQL | `download`, `pkg` | `com.github.jrmfong.pkg.SnowSQL` | |
 | VeraCrypt | `pkg` | `com.github.jrmfong.pkg.Veracrypt` | `com.github.dataJAR-recipes.download.VeraCrypt` |
 | Yamaha TF Editor | `download`, `pkg` | `com.github.jrmfong.pkg.YamahaTFEditor` | |
 
@@ -65,16 +65,16 @@ autopkg run -v com.github.jrmfong.pkg.IntelliJIDEA -k DOWNLOAD_ARCH=mac
 
 The parent download recipe defines the accepted `DOWNLOAD_ARCH` values, not this repo. Check the parent for the Intel equivalent before you override. Eclipse Temurin JDK 25 is defined here, and takes `aarch64` or `x64`.
 
-snowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` package in the vendor page, so there is no input to switch it to Intel.
+SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` package in the vendor page, so there is no input to switch it to Intel.
 
 ### Notes on individual recipes
 
 - Jamf Setup Checklist comes from the [Jamf-Concepts/setup-checklist](https://github.com/Jamf-Concepts/setup-checklist) GitHub releases, read by `GitHubReleasesInfoProvider`.
 - Shure Designer 6 ships as a nested ZIP holding an InstallBuilder app, not a drag-install `.app`. The `pkg` recipe wraps that installer and runs it unattended from a `postinstall` script. The package is a bootstrapper, not a copy of the payload.
 - Shure Designer 6 file names drop the version, but the identifiers keep the `6` suffix (`...ShureDesigner6`).
-- Shure Update Utility, Yamaha TF Editor and snowSQL already ship a signed flat `.pkg`. These recipes read a version number, then re-copy the vendor package under a versioned name.
-- snowSQL and Yamaha TF Editor read that version with `PkgInfoReader`. Shure Update Utility cannot: its package declares `version="0"`, so the recipe unpacks the payload and reads the version from the app instead.
-- CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro and snowSQL use `URLDownloaderPython` with a browser `User-Agent`.
+- Shure Update Utility, Yamaha TF Editor and SnowSQL already ship a signed flat `.pkg`. These recipes read a version number, then re-copy the vendor package under a versioned name.
+- SnowSQL and Yamaha TF Editor read that version with `PkgInfoReader`. Shure Update Utility cannot: its package declares `version="0"`, so the recipe unpacks the payload and reads the version from the app instead.
+- CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro and SnowSQL use `URLDownloaderPython` with a browser `User-Agent`.
 - Every `download` recipe stops early when the vendor file is unchanged. The matching `pkg` recipe then builds nothing, because the chain stops first. Set `BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED=True` to run the rest against the cached download.
 
 ## Contributing
