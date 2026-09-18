@@ -17,6 +17,7 @@ Process:
       filename: "%NAME%.zip"
       url: "https://uk.yamaha.com/en/download/files/%match%/"
 
+  # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
 
   - Processor: StopProcessingIf
@@ -27,6 +28,7 @@ Process:
     Arguments:
       archive_path: "%pathname%"
       destination_path: "%RECIPE_CACHE_DIR%/unzip"
+      purge_destination: true
 
   - Processor: CodeSignatureVerifier
     Arguments:
