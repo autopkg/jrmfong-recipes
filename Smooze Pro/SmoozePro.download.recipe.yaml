@@ -1,5 +1,5 @@
 Description: |
-  Downloads the most recent dmg of Smooze Pro.
+  Downloads the latest signed dmg of Smooze Pro.
 
 Identifier: com.github.jrmfong.download.SmoozePro
 MinimumVersion: '2.9'
@@ -19,6 +19,7 @@ Process:
       request_headers:
         User-Agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
 
+  # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
 
   - Processor: StopProcessingIf
@@ -28,6 +29,6 @@ Process:
   - Processor: CodeSignatureVerifier
     Arguments:
       deep_verification: true
-      input_path: '%RECIPE_CACHE_DIR%/downloads/%NAME%.dmg/Smooze Pro.app'
+      input_path: '%pathname%/Smooze Pro.app'
       requirement: anchor apple generic and identifier "co.smoozepro.macos" and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "6TT7VL9KAT")
       strict_verification: true
