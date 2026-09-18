@@ -8,7 +8,6 @@ Input:
   NAME: MyDPD Customer
   DOWNLOAD_URL: https://apis.my.dpd.co.uk/apps/download/public
   DOWNLOAD_MISSING_FILE: "True"
-  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
 
 Process:
   - Processor: URLDownloaderPython
@@ -21,10 +20,6 @@ Process:
 
   # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
-
-  - Processor: StopProcessingIf
-    Arguments:
-      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
 
   - Processor: CodeSignatureVerifier
     Arguments:
