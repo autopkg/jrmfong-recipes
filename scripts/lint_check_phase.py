@@ -35,8 +35,8 @@ MARKER = "EndOfCheckPhase"
 OPENS_DOWNLOAD = {
     "AppDmgVersioner", "AppPkgCreator", "CodeSignatureVerifier", "Copier",
     "DmgCreator", "FileFinder", "FileMover", "FlatPkgUnpacker", "PathDeleter",
-    "PkgCopier", "PkgPayloadUnpacker", "Unarchiver", "Versioner",
-    "XarExtractSingleFile", "XPathParser",
+    "PkgCopier", "PkgInfoReader", "PkgPayloadUnpacker", "PlistReader",
+    "Unarchiver", "Versioner", "XarExtractSingleFile", "XPathParser",
 }
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
