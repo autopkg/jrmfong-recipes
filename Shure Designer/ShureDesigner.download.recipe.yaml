@@ -1,5 +1,6 @@
 Description: |
-  Download and extract Shure Designer 6 ZIP file.
+  Downloads the latest zip of Shure Designer 6 and extracts the signed
+  installer app.
 
 Identifier: com.github.jrmfong.download.ShureDesigner6
 MinimumVersion: "2.3"
@@ -7,7 +8,6 @@ MinimumVersion: "2.3"
 Input:
   NAME: Shure Designer 6
   DOWNLOAD_URL: https://www.shure.com/en-US/sw/designer-mac
-  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
 
 Process:
   - Processor: URLDownloader
@@ -15,11 +15,8 @@ Process:
       filename: ShureDesigner6.zip
       url: "%DOWNLOAD_URL%"
 
+  # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
-
-  - Processor: StopProcessingIf
-    Arguments:
-      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
 
   - Processor: Unarchiver
     Arguments:

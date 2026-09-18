@@ -1,5 +1,6 @@
 Description: |
-  Downloads the most recent signed release pkg of Smooze Pro.
+  Downloads the latest version of Smooze Pro and builds a package from
+  the app in the dmg.
 
 Identifier: com.github.jrmfong.pkg.SmoozePro
 ParentRecipe: com.github.jrmfong.download.SmoozePro
@@ -11,4 +12,4 @@ Input:
 Process:
   - Processor: AppPkgCreator
     Arguments:
-      app_path: '%RECIPE_CACHE_DIR%/downloads/%NAME%.dmg/%NAME%.app'
+      app_path: '%pathname%/%NAME%.app'

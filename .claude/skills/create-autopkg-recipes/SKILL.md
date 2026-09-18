@@ -10,6 +10,7 @@ description: |
   - YAML recipe, yaml-recipe
   - homebysix-recipes, Munki, pkg
   - code signature, CodeSignatureVerifier, strict verification, deep verification
+  - EndOfCheckPhase, check phase, download cache, dmg mount
 user-invocable: true
 ---
 
@@ -17,12 +18,13 @@ user-invocable: true
 
 Write YAML recipes for a macOS app, following the conventions in this repo.
 Every recipe must check the code signature. This repo does not accept an
-unsigned app. Test the download recipe and the pkg recipe end to end before you
-hand the work over.
+unsigned app. Every recipe must also leave the download closed until the check
+phase ends, so a CI run can reuse a cached download. Test the download recipe
+and the pkg recipe end to end before you hand the work over.
 
 Follow the house style, [[plain-technical-english]], in every word of prose you
 write. That covers the `Description` field, the comments in the YAML, your
-report at step 8, and the commit message. Identifiers, processor names, input
+report at step 9, and the commit message. Identifiers, processor names, input
 keys and requirement strings are technical names, so they stay exact.
 
 ## 1. Check for a recipe that already exists
@@ -91,20 +93,19 @@ MinimumVersion: "2.3"
 
 Input:
   NAME: AppName
-  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
+  DOWNLOAD_MISSING_FILE: "True"
 
 Process:
-  - Processor: URLDownloader
+  - Processor: URLDownloaderPython
     Arguments:
+      download_missing_file: "%DOWNLOAD_MISSING_FILE%"
       url: https://example.com/AppName.dmg
       filename: "%NAME%.dmg"
 
+  # The check phase ends here. Nothing above this line opens the dmg.
   - Processor: EndOfCheckPhase
 
-  - Processor: StopProcessingIf
-    Arguments:
-      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
-
+  # The first step that mounts the dmg, and it sits after the marker.
   - Processor: CodeSignatureVerifier
     Arguments:
       input_path: "%pathname%/AppName.app"
@@ -121,7 +122,16 @@ Process:
 Always set both `strict_verification: true` and `deep_verification: true`.
 Strict verification rejects a bundle that carries extra or unsealed files. Deep
 verification checks the nested code, such as frameworks, helpers and XPC
-services. Leave either one out and a tampered bundle can pass.
+services.
+
+Only one of the 2 changes what codesign does. `deep_verification` already
+defaults to `true` in `CodeSignatureVerifier`, so writing it is documentation.
+`strict_verification` has no default, so codesign runs without `--strict` until
+you set it. Leave it out and a bundle carrying extra or unsealed files passes.
+Write both anyway, so the next reader sees which checks apply.
+
+Most third-party download recipes set neither. Read the parent before you rely
+on it, and say so in your report at step 9 when it runs without `--strict`.
 
 The `requirement` is the designated requirement string you captured at step 3.
 It is the strictest form, so use it rather than `expected_authority_names`.
@@ -146,7 +156,161 @@ Name it `<Vendor><Purpose>InfoProvider.py`. Subclass `autopkglib.URLGetter`.
 That keeps the same regular expression out of several recipes. For one URL
 behind an API, `URLTextSearcher` is enough.
 
-## 5. Conventions
+## 5. Order the process so CI can cache the download
+
+Put `EndOfCheckPhase` straight after the download processor. Put every step that
+opens the download after it. A CI run can then restore a cached download and do
+no further work on an app that has not changed.
+
+### The rule AutoPkg applies
+
+`autopkg --check` does not stop at the first `EndOfCheckPhase`. It deletes steps
+from the end of the merged chain until the last one left is the marker, in
+`/Library/AutoPkg/autopkg` around line 2213:
+
+```python
+while (len(recipe["Process"]) >= 1
+       and recipe["Process"][-1]["Processor"] != "EndOfCheckPhase"):
+    del recipe["Process"][-1]
+```
+
+So every step before the last marker runs in the check phase, across the parent
+recipe and the child recipe together.
+
+A CI runner caches the download metadata, not the file. It leaves an empty
+placeholder where the skipped download would be. Any step before the marker then
+reads a file with no contents, and the recipe fails on the nights the cache
+works. That reads as a broken recipe rather than a caching problem.
+
+Mounting an empty placeholder is the usual symptom:
+
+```
+hdiutil: attach failed - image not recognized
+```
+
+A later step reports `is not mounted` for the same reason. In the caching
+experiment of 15 September 2026 this was every failure: RubyMine, JabraDirect
+and AdobeCreativeCloudInstallerUniversal, 3 recipes out of 71. Each one failed
+only because its download had been skipped correctly.
+
+### Rules for the marker
+
+- write one `EndOfCheckPhase` in the whole chain, and write it in the download
+  recipe only
+- put it straight after the last download processor
+- never add a second marker, such as a recipe that downloads twice. The trim
+  keeps everything up to the last one, so the first download gets processed in
+  the check phase
+- never put a marker in a pkg, munki or install recipe. The parent already
+  carries one, and a second marker pulls the parent's signature check into the
+  check phase
+- put nothing before the marker that opens the download
+
+### A third-party parent may break the cache
+
+A pkg recipe here can name a `ParentRecipe` from another repo, such as
+`com.github.dataJAR-recipes.download.VeraCrypt`. You do not control where that
+parent puts its marker, and the trim runs over the merged chain. Read the parent
+before you rely on it:
+
+```
+autopkg info -p <App>/<App>.pkg.recipe.yaml
+```
+
+Check 2 things: the parent holds one marker, and no step that opens the download
+sits above it. When it fails either check, say so. The fix is to fork the parent
+into this repo with the marker moved above every step that opens the download.
+Nothing is weakened by the move, because a full build still runs every step.
+
+### Processors that open the download
+
+Keep all of these after the marker:
+
+| Processor | What it does to the download |
+|-----------|------------------------------|
+| `AppDmgVersioner` | mounts the dmg |
+| `CodeSignatureVerifier` | mounts the dmg when `input_path` starts with `%pathname%` |
+| `Unarchiver` | reads the zip |
+| `Versioner` | mounts the dmg to read `Info.plist` |
+| `Copier` | mounts the dmg to copy out of it |
+| `DmgCreator` | reads the source |
+| `FlatPkgUnpacker` | expands the pkg |
+| `PkgPayloadUnpacker` | reads the payload |
+| `AppPkgCreator`, `PkgCopier` | read the app or the pkg |
+| `FileFinder`, `FileMover`, `PathDeleter` | read or move the file |
+| `XarExtractSingleFile`, `XPathParser` | read inside the file |
+
+A `URLTextSearcher`, a `GitHubReleasesInfoProvider` or a custom info provider is
+safe before the download. Each one reads a web page or an API, not the
+downloaded file.
+
+### The safe order for each shape
+
+| Shape | Order |
+|-------|-------|
+| dmg | `URLDownloaderPython`, `EndOfCheckPhase`, `CodeSignatureVerifier`, `Versioner` |
+| zip | `URLDownloaderPython`, `EndOfCheckPhase`, `Unarchiver`, `CodeSignatureVerifier`, `Versioner` |
+| pkg | `URLDownloaderPython`, `EndOfCheckPhase`, `CodeSignatureVerifier` |
+| URL behind a page | `URLTextSearcher`, `URLDownloaderPython`, `EndOfCheckPhase`, then as above |
+
+A Sparkle appcast can enclose a zip rather than a dmg. Read the type of the
+enclosure URL in the appcast before you assume a dmg. A zip needs `Unarchiver`
+between the marker and `CodeSignatureVerifier`.
+
+### Which downloader CI can cache
+
+AutoPkg has 2 downloaders, and they record the download differently:
+
+- `URLDownloader` writes the ETag and Last-Modified as extended attributes on
+  the file. `tar` drops those on macOS by default, so a restored file is ignored
+  and the download happens again
+- `URLDownloaderPython` writes a `.info.json` beside the file. That survives any
+  `tar`, but the CI cache must hold the sidecar as well as the metadata
+
+This repo uses `URLDownloaderPython`. Tell whoever runs the CI job to cache
+`AutoPkg/Cache/*/downloads/*.info.json` alongside the metadata cache. Without
+the sidecar the downloader reports `missing download info (FileNotFoundError)`
+and downloads the file again.
+
+### Do not add a StopProcessingIf guard
+
+You will see this pattern in other repos, and in this repo's own history. Do not
+add it to a new recipe:
+
+```yaml
+  - Processor: StopProcessingIf
+    Arguments:
+      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
+```
+
+It is meant to skip the mount, the unarchive, the signature check and the copy
+when the vendor file has not changed. That is 1 to 2 seconds on a typical recipe
+here, and 3 other mechanisms already cover it:
+
+| Mechanism | What it skips |
+| --- | --- |
+| the check phase and the metadata cache | the whole run |
+| an ETag or Last-Modified match in the downloader | the download body |
+| `PkgCreator` finding the same version and identifier | the package build |
+
+The guard also sits below `EndOfCheckPhase`, so it never runs during the check
+phase at all. It cannot speed up the part a CI cache speeds up.
+
+Worse, a 2-phase runner turns it into a silent failure. The check phase
+downloads the file, so the runner sees a new download and starts the full run.
+The full run finds that same file in the cache, so `download_changed` is `False`
+and the guard stops the recipe before it packages. Nothing is staged, and the job
+still reports success. A single-phase local `autopkg run` never reaches that
+point, so the recipe packages fine on your machine.
+
+That is why every consumer ends up switching it back off. In the pipeline that
+runs these recipes, 24 of 72 overrides carry
+`BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: 'True'` for no other reason.
+
+Leave the guard out and leave its input key out. A recipe you inherit that has
+one is worth cleaning up.
+
+## 6. Conventions
 
 Follow these conventions in every recipe:
 
@@ -163,10 +327,9 @@ Follow these conventions in every recipe:
 - set both `strict_verification: true` and `deep_verification: true` on every
   `CodeSignatureVerifier` step
 - take the `requirement` string from steps 3 and 4
-- add a `StopProcessingIf` guard after `EndOfCheckPhase`, and declare its input
-  key
-- order a zip with no appcast as `URLDownloader`, `EndOfCheckPhase`,
-  `Unarchiver`, `CodeSignatureVerifier`, `Versioner`
+- put `EndOfCheckPhase` straight after the download
+- add no `StopProcessingIf` guard, for the reason in step 5
+- add a `Comment:` to a step whose reason is not obvious from its arguments
 - set both `unattended_install` and `unattended_uninstall` to `true` in a munki
   `pkginfo`
 - write the munki `description` as one plain sentence of fact, with no marketing
@@ -174,10 +337,6 @@ Follow these conventions in every recipe:
 
 The app "Tight Studio" gets `TightStudio.pkg.recipe.yaml`. The pre-commit hooks
 catch a `MinimumVersion` mismatch.
-
-A Sparkle appcast can enclose a zip rather than a dmg. That also needs
-`Unarchiver` between `EndOfCheckPhase` and `CodeSignatureVerifier`. Read the
-type of the enclosure URL in the appcast before you assume a dmg.
 
 Never leave the munki `description` empty. Check it against the app itself if
 you are unsure: mount the dmg, read `Info.plist`, or run `strings` over the
@@ -204,37 +363,7 @@ the user asks:
 
 Go to the vendor direct. Every extra hop is someone else to trust.
 
-### Stop early when the download is unchanged
-
-An undeclared input breaks the recipe on every run, so declare the input key
-first. NSPredicate reads the leading `%B` as a format specifier, and the run
-fails with "Too few arguments for format string". Add this to `Input`:
-
-```yaml
-  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
-```
-
-Then add the guard straight after `EndOfCheckPhase`:
-
-```yaml
-  - Processor: StopProcessingIf
-    Arguments:
-      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
-```
-
-Know what the guard does and does not save. `URLDownloader` already skips the
-download body on an ETag or Last-Modified match. `PkgCreator` already skips the
-build when a package of the same version and identifier exists. The guard
-removes the work between those 2 skips: the mount, the unarchive, the signature
-check and the copy. That is 1 to 2 seconds on a typical recipe here.
-
-The guard pays for itself when the chain uploads or imports, such as a
-`MunkiImporter` step or a Jamf upload. Weigh 2 costs against it.
-`CodeSignatureVerifier` stops running on a cached artifact. The whole chain also
-stops, so a pkg recipe builds nothing until you set
-`BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED=True`.
-
-## 6. Hard stops for security
+## 7. Hard stops for security
 
 Stop and report in these cases:
 
@@ -246,7 +375,7 @@ Stop and report in these cases:
 The first 3 cases are not negotiable. For HTTP, explain the risk to the user and
 wait. Carry on only when they say yes.
 
-## 7. Test the recipes end to end
+## 8. Test the recipes end to end
 
 ```
 autopkg run -vvq <App>/<App>.download.recipe.yaml <App>/<App>.pkg.recipe.yaml
@@ -260,7 +389,17 @@ A trust-info warning on an uncommitted recipe is normal.
 A `CodeSignatureVerifier` failure here means the recipe cannot ship. Fix the
 requirement string or the input path, or reject the app.
 
-## 8. Report
+Test the check phase as well, because a single-phase run hides the caching
+problem at step 5:
+
+```
+autopkg run --check -vv <App>/<App>.download.recipe.yaml
+```
+
+The output must stop at `EndOfCheckPhase`. No mount, no signature check and no
+`Unarchiver` line may appear before it.
+
+## 9. Report
 
 Say what you created. Say what tested clean. Name any caveat, such as unusual
 signing, a developer name that does not match, or a test you skipped.

@@ -75,7 +75,85 @@ SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` pa
 - Shure Update Utility, Yamaha TF Editor and SnowSQL already ship a signed flat `.pkg`. These recipes read a version number, then re-copy the vendor package under a versioned name.
 - SnowSQL and Yamaha TF Editor read that version with `PkgInfoReader`. Shure Update Utility cannot: its package declares `version="0"`, so the recipe unpacks the payload and reads the version from the app instead.
 - CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro and SnowSQL use `URLDownloaderPython` with a browser `User-Agent`.
-- Every `download` recipe stops early when the vendor file is unchanged. The matching `pkg` recipe then builds nothing, because the chain stops first. Set `BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED=True` to run the rest against the cached download.
+
+## Running in CI
+
+Every recipe here is written so a CI job can restore a cached download and skip
+the work that follows. Three things matter: where the marker sits, what the job
+caches, and what the recipes deliberately leave out.
+
+### The check phase stops at the download
+
+`autopkg --check` keeps every step up to the last `EndOfCheckPhase` in the merged
+parent chain, then deletes the rest. Every recipe here puts that marker straight
+after its download processor, so the check phase does nothing but fetch. The
+steps that mount a dmg, unzip an archive or check a signature all sit below it.
+
+This matters because a runner restores the download metadata, not the file. It
+leaves an empty placeholder where the skipped download would be. A step above the
+marker then reads a file with no contents, and mounting an empty placeholder
+gives:
+
+```
+hdiutil: attach failed - image not recognized
+```
+
+The recipe fails on the runs where the cache works, which reads as a broken
+recipe rather than a caching problem. `scripts/lint_check_phase.py` checks the
+whole merged chain, external parents included, and the pre-commit hook runs it on
+every commit.
+
+Check a chain by hand:
+
+```sh
+autopkg run --check -v com.github.jrmfong.pkg.MyDPDCustomer
+```
+
+The output must stop at `EndOfCheckPhase`. No mount, no unarchive and no
+signature check may appear before it.
+
+### What the job has to cache
+
+AutoPkg has 2 downloaders, and they record a download differently:
+
+| Downloader | Where the state lives | Recipes |
+| --- | --- | --- |
+| `URLDownloader` | extended attributes on the file | Eclipse Temurin, Shure Designer 6, Shure Update Utility, Yamaha TF Editor, and every external parent |
+| `URLDownloaderPython` | a `.info.json` file beside the download | CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro, SnowSQL |
+
+Cache `AutoPkg/Cache/*/downloads/*.info.json` along with the metadata cache. Miss
+the sidecars and those 6 recipes fetch the file again on every run, logging:
+
+```
+URLDownloaderPython: WARNING: missing download info (FileNotFoundError)
+```
+
+Cache the metadata rather than the downloaded files. `tar` drops extended
+attributes on macOS by default, so a restored file loses the ETag that
+`URLDownloader` compares against, and the download happens anyway.
+
+### No recipe stops itself early
+
+No `download` recipe here carries a `StopProcessingIf` guard, and none declares
+`BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED`. Nothing has to be bypassed to
+make a full run package anything.
+
+The guard used to sit after `EndOfCheckPhase` in every download recipe. It was
+removed because it saved nothing that the check phase, the downloader's ETag
+match and `PkgCreator` do not already save, and because a 2-phase runner turns it
+into a silent failure. The check phase downloads the file, the runner sees a new
+download and starts the full run, and the full run then finds that same file in
+the cache. `download_changed` is `False`, the chain stops before it builds
+anything, and the job still reports success.
+
+An override that still sets `BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED` keeps
+working. The key is simply unused now, so you can drop it at your leisure.
+
+### Known limits
+
+- Eclipse Temurin JDK 25 and Jamf Setup Checklist read the GitHub releases API, as does the VeraCrypt parent. Give the job a token, through the `GITHUB_TOKEN` preference or the file at `GITHUB_TOKEN_PATH`, or it meets the anonymous rate limit.
+- The Yamaha TF Editor download returns no `ETag` and no `Last-Modified`, so `URLDownloader` falls back to matching on file size. That does not prove the build is unchanged.
+- The external parents for Adobe Acrobat, AWS Session Manager Plugin, Burp Suite, IntelliJ IDEA and VeraCrypt all check the code signature, but none sets `strict_verification`.
 
 ## Contributing
 
@@ -86,10 +164,14 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+A local hook, `scripts/lint_check_phase.py`, also checks that no recipe opens its download before `EndOfCheckPhase`, for the reason given in [Running in CI](#running-in-ci). Run it by hand with `python3 scripts/lint_check_phase.py`, which needs PyYAML.
+
 When adding a recipe:
 
 1. Put it in a directory named after the software.
 2. Prefix the identifier with `com.github.jrmfong.` and match the existing `download` / `pkg` naming.
 3. Check the code signature in the `download` recipe. Pin the Team ID and bundle identifier, not just the anchor.
 4. Set `MinimumVersion` to the lowest AutoPkg release the processors actually need.
-5. Add the recipe to the table above.
+5. Put `EndOfCheckPhase` straight after the download processor, and every step that mounts or unpacks the download after it.
+6. Add no `StopProcessingIf` guard. See [Running in CI](#running-in-ci) for why.
+7. Add the recipe to the table above.
