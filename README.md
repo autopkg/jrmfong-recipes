@@ -15,7 +15,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 
 ### Requirements
 
-- AutoPkg 2.3 or later. Every recipe is YAML, which needs 2.3 as a minimum. AutoPkg 2.9 or later for the ones that use `URLDownloaderPython`: CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro and SnowSQL.
+- AutoPkg 2.3 or later. Every recipe is YAML, which needs 2.3 as a minimum. AutoPkg 2.9 or later for the ones that use `URLDownloaderPython`: CueTimer, Ekahau Capture, fuse-t, Jamf Setup Checklist, MyDPD Customer, Smooze Pro, SnowSQL and the VeraCrypt FUSE-T build.
 - Parent repos. Recipes with an external parent need that repo added first:
 
   ```sh
@@ -36,6 +36,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | CueTimer | `download`, `pkg` | `com.github.jrmfong.pkg.CueTimer` | |
 | Eclipse Temurin JDK 25 | `download`, `pkg` | `com.github.jrmfong.pkg.EclipseTemurinJDK25` | |
 | Ekahau Capture | `download`, `pkg` | `com.github.jrmfong.pkg.EkahauCapture` | |
+| fuse-t | `download`, `pkg` | `com.github.jrmfong.pkg.FuseT` | |
 | IntelliJ IDEA | `pkg` | `com.github.jrmfong.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
 | Jamf Setup Checklist | `download`, `pkg` | `com.github.jrmfong.pkg.JamfSetupChecklist` | |
 | MyDPD Customer | `download`, `pkg` | `com.github.jrmfong.pkg.MyDPDCustomer` | |
@@ -44,6 +45,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | Smooze Pro | `download`, `pkg` | `com.github.jrmfong.pkg.SmoozePro` | |
 | SnowSQL | `download`, `pkg` | `com.github.jrmfong.pkg.SnowSQL` | |
 | VeraCrypt | `pkg` | `com.github.jrmfong.pkg.Veracrypt` | `com.github.dataJAR-recipes.download.VeraCrypt` |
+| VeraCrypt (FUSE-T build) | `download`, `pkg` | `com.github.jrmfong.pkg.VeracryptFuseT` | |
 | Yamaha TF Editor | `download`, `pkg` | `com.github.jrmfong.pkg.YamahaTFEditor` | |
 
 A `download` recipe fetches the vendor release and checks its code signature. A `pkg` recipe builds the installer package from that download. Each app lives in its own directory. Every recipe uses YAML (`.recipe.yaml`).
@@ -70,11 +72,15 @@ SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` pa
 ### Notes on individual recipes
 
 - Jamf Setup Checklist comes from the [Jamf-Concepts/setup-checklist](https://github.com/Jamf-Concepts/setup-checklist) GitHub releases, read by `GitHubReleasesInfoProvider`.
+- fuse-t comes from the [macos-fuse-t/fuse-t](https://github.com/macos-fuse-t/fuse-t) GitHub releases. Each release holds one universal package, and the version comes from the release tag rather than the package, because the vendor ships a distribution package with no product version of its own.
+- VeraCrypt ships 2 macOS builds per release. `Veracrypt.pkg` takes the macFUSE one through the dataJAR parent. `VeracryptFuseT.pkg` takes `VeraCrypt_FUSE-T_<version>.dmg` through a download recipe of its own, because the parent's `asset_regex` requires a digit straight after `VeraCrypt_` and an override cannot change a `Process` argument.
+- The VeraCrypt FUSE-T build needs fuse-t installed first. Its installer checks for `/usr/local/lib/libfuse-t.dylib` and refuses to run without it, so deploy `com.github.jrmfong.pkg.FuseT` ahead of it. It also needs macOS 12 or later.
+- Both VeraCrypt builds carry the package identifier `com.idrix.pkg.veracrypt` and the same version, so install only one of the 2 on a Mac. The built file names differ, because `Input/NAME` does.
 - Shure Designer 6 ships as a nested ZIP holding an InstallBuilder app, not a drag-install `.app`. The `pkg` recipe wraps that installer and runs it unattended from a `postinstall` script. The package is a bootstrapper, not a copy of the payload.
 - Shure Designer 6 file names drop the version, but the identifiers keep the `6` suffix (`...ShureDesigner6`).
 - Shure Update Utility, Yamaha TF Editor and SnowSQL already ship a signed flat `.pkg`. These recipes read a version number, then re-copy the vendor package under a versioned name.
 - SnowSQL and Yamaha TF Editor read that version with `PkgInfoReader`. Shure Update Utility cannot: its package declares `version="0"`, so the recipe unpacks the payload and reads the version from the app instead.
-- CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro and SnowSQL use `URLDownloaderPython` with a browser `User-Agent`.
+- CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro and SnowSQL use `URLDownloaderPython` with a browser `User-Agent`. fuse-t uses the same downloader without one, because GitHub needs no such header.
 
 ## Running in CI
 
@@ -119,7 +125,7 @@ AutoPkg has 2 downloaders, and they record a download differently:
 | Downloader | Where the state lives | Recipes |
 | --- | --- | --- |
 | `URLDownloader` | extended attributes on the file | Eclipse Temurin, Shure Designer 6, Shure Update Utility, Yamaha TF Editor, and every external parent |
-| `URLDownloaderPython` | a `.info.json` file beside the download | CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro, SnowSQL |
+| `URLDownloaderPython` | a `.info.json` file beside the download | CueTimer, Ekahau Capture, fuse-t, Jamf Setup Checklist, MyDPD Customer, Smooze Pro, SnowSQL, VeraCrypt FUSE-T |
 
 Cache `AutoPkg/Cache/*/downloads/*.info.json` along with the metadata cache. Miss
 the sidecars and those 6 recipes fetch the file again on every run, logging:
