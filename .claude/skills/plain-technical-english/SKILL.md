@@ -20,7 +20,8 @@ Apply the style to all prose you write:
 
 - your messages to the user
 - plans, reports and summaries
-- documentation, README files and pages under `docs/`
+- documentation and README files
+- the `Description` field of a recipe, and the comments in recipe YAML
 - commit messages and pull request bodies
 - code comments and docstrings
 
@@ -31,10 +32,19 @@ Do not apply it to:
 - output you quote from a tool, a log or a test run, which you quote as it is
 - text you quote from a person or a document
 
-In this repo the exact names include Jamf endpoint paths such as
-`/JSSResource/policies/`, XML element names such as `<vcommand>`, Codacy rule ids
-such as `D213`, script names such as `jamfsync.py`, and every shell command. Leave
-all of them alone.
+In this repo the exact names include recipe identifiers such as
+`com.github.jrmfong.download.SnowSQL`, processor names such as
+`CodeSignatureVerifier` and `URLDownloaderPython`, input keys such as `NAME` and
+`BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED`, recipe file names such as
+`SnowSQL.download.recipe.yaml`, bundle identifiers such as
+`com.presentationtools.CueTimer`, Team IDs such as `7QFCUX9LLX`, code signature
+requirement strings, and every shell command. Leave all of them alone.
+
+A code signature requirement is one long string that must match byte for byte.
+Never reword it, never wrap it, and never fix its spacing.
+
+An app version number is a technical name, so write it as the vendor does. Leave
+`2.15.0` and `2.9` alone.
 
 ## Content design
 
@@ -82,6 +92,10 @@ Use everyday words:
 | modify        | change         | require       | need           |
 
 Do not use "impact" as a verb. Write "effect on", not "impact on".
+
+"Verify" is a plain English problem and a technical name at the same time. In
+prose, write "check the signature". In a recipe, `CodeSignatureVerifier`,
+`strict_verification` and `deep_verification` are names, so leave them exact.
 
 Software jargon breaks plain English in the same way:
 
@@ -287,5 +301,11 @@ Fix the text before you send it. Do not show the check to the user.
 Use ASCII only. Use "-" for a dash and "..." for an ellipsis. Use ' and " for
 quotes. No emoji.
 
-Commits no longer carry a `Co-Authored-By: Claude ...` trailer. Older commits carry one, which is a record and not a pattern to
-copy.
+A commit message and a pull request body end with the attribution trailer the
+session asks you to add, copied exactly. That line is a fixed string, so the
+ASCII rule and the emoji rule do not apply to it. Add nothing after it.
+
+## Related
+
+- pull request titles, bodies and commit messages: [[pr-description]]
+- the `Description` field and the comments in a recipe: [[create-autopkg-recipes]]
