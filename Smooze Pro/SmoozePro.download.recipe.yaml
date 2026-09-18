@@ -8,7 +8,6 @@ Input:
   NAME: Smooze Pro
   DOWNLOAD_URL: https://smooze.co/pro/updates/SmoozePro.dmg
   DOWNLOAD_MISSING_FILE: 'True'
-  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: 'False'
 
 Process:
   - Processor: URLDownloaderPython
@@ -21,10 +20,6 @@ Process:
 
   # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
-
-  - Processor: StopProcessingIf
-    Arguments:
-      predicate: 'download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False'
 
   - Processor: CodeSignatureVerifier
     Arguments:
