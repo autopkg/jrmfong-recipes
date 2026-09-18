@@ -5,7 +5,6 @@ MinimumVersion: "2.3"
 Input:
   NAME: Shure Update Utility
   DOWNLOAD_URL: https://www.shure.com/en-US/sw/suu-mac
-  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
 
 Process:
   - Processor: URLDownloader
@@ -15,10 +14,6 @@ Process:
 
   # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
-
-  - Processor: StopProcessingIf
-    Arguments:
-      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
 
   - Processor: CodeSignatureVerifier
     Arguments:
