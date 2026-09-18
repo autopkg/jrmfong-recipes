@@ -1,0 +1,20 @@
+Description: |
+  Downloads the latest version of fuse-t and renames the package to include
+  the version.
+
+  The version comes from the GitHub release tag. The vendor package is a
+  distribution package holding fuse-t-core and fuse-t-fskit, so its own
+  Distribution file declares no product version to read.
+
+Identifier: com.github.jrmfong.pkg.FuseT
+ParentRecipe: com.github.jrmfong.download.FuseT
+MinimumVersion: "2.9"
+
+Input:
+  NAME: fuse-t
+
+Process:
+  - Processor: PkgCopier
+    Arguments:
+      source_pkg: "%pathname%"
+      pkg_path: "%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg"
