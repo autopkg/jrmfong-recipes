@@ -1,0 +1,25 @@
+Description: |
+  Downloads the latest FUSE-T build of VeraCrypt and renames the installer
+  package to include the version.
+
+  The package carries the same identifier as the macFUSE build,
+  com.idrix.pkg.veracrypt, and the same version. Only one of the 2 can be
+  installed on a Mac, so keep them apart in your deployment tool. The file name
+  differs, because Input/NAME does.
+
+Identifier: com.github.jrmfong.pkg.VeraCryptFuseT
+ParentRecipe: com.github.jrmfong.download.VeraCryptFuseT
+MinimumVersion: "2.9"
+
+Input:
+  NAME: VeraCrypt-FUSE-T
+
+Process:
+  - Processor: com.github.grahampugh.recipes.commonprocessors/PkgInfoReader
+    Arguments:
+      source_pkg: "%pathname%/VeraCrypt_Installer.pkg"
+
+  - Processor: PkgCopier
+    Arguments:
+      source_pkg: "%pathname%/VeraCrypt_Installer.pkg"
+      pkg_path: "%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg"
