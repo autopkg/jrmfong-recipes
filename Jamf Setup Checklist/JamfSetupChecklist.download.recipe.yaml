@@ -1,5 +1,5 @@
 Description: |
-  Downloads the most recent signed release pkg of Jamf Setup Checklist
+  Downloads the latest signed installer package of Jamf Setup Checklist.
 
 Identifier: com.github.jrmfong.download.JamfSetupChecklist
 MinimumVersion: "2.9"
@@ -13,7 +13,7 @@ Process:
   - Processor: GitHubReleasesInfoProvider
     Arguments:
       github_repo: "Jamf-Concepts/setup-checklist"
-      include_prerelease: False
+      include_prereleases: false
       asset_regex: Setup\.Checklist-.*\.pkg
 
   - Processor: URLDownloaderPython
@@ -24,6 +24,7 @@ Process:
       request_headers:
         User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 
+  # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
 
   - Processor: StopProcessingIf
