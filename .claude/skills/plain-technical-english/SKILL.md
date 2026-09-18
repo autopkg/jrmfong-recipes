@@ -35,7 +35,7 @@ Do not apply it to:
 In this repo the exact names include recipe identifiers such as
 `com.github.jrmfong.download.SnowSQL`, processor names such as
 `CodeSignatureVerifier` and `URLDownloaderPython`, input keys such as `NAME` and
-`BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED`, recipe file names such as
+`DOWNLOAD_MISSING_FILE`, recipe file names such as
 `SnowSQL.download.recipe.yaml`, bundle identifiers such as
 `com.presentationtools.CueTimer`, Team IDs such as `7QFCUX9LLX`, code signature
 requirement strings, and every shell command. Leave all of them alone.
