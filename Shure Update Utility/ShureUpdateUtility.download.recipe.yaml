@@ -1,4 +1,4 @@
-Description: Download and extract Shure Update Utility.
+Description: Downloads the latest signed installer package of Shure Update Utility.
 Identifier: com.github.jrmfong.download.ShureUpdateUtility
 MinimumVersion: "2.3"
 
@@ -13,6 +13,7 @@ Process:
       filename: "%NAME%.pkg"
       url: "%DOWNLOAD_URL%"
 
+  # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
 
   - Processor: StopProcessingIf
