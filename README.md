@@ -86,10 +86,13 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+A local hook, `scripts/lint_check_phase.py`, also checks that no recipe opens its download before `EndOfCheckPhase`. A step above the marker runs during `autopkg --check`, so it meets an empty placeholder when a CI run reuses a cached download, and a dmg fails to mount. Run it by hand with `python3 scripts/lint_check_phase.py`, which needs PyYAML.
+
 When adding a recipe:
 
 1. Put it in a directory named after the software.
 2. Prefix the identifier with `com.github.jrmfong.` and match the existing `download` / `pkg` naming.
 3. Check the code signature in the `download` recipe. Pin the Team ID and bundle identifier, not just the anchor.
 4. Set `MinimumVersion` to the lowest AutoPkg release the processors actually need.
-5. Add the recipe to the table above.
+5. Put `EndOfCheckPhase` straight after the download processor, and every step that mounts or unpacks the download after it.
+6. Add the recipe to the table above.
