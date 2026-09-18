@@ -1,0 +1,44 @@
+Description: |
+  Downloads the latest signed installer package of fuse-t.
+
+  fuse-t is a FUSE implementation for macOS. It serves the file system from
+  user space over NFS, so it needs no kernel extension.
+
+  The source is the GitHub releases of macos-fuse-t/fuse-t. Each release holds
+  one universal package, so there is no architecture input.
+
+Identifier: com.github.jrmfong.download.FuseT
+MinimumVersion: "2.9"
+
+Input:
+  NAME: fuse-t
+  GITHUB_REPO: macos-fuse-t/fuse-t
+  DOWNLOAD_MISSING_FILE: "True"
+
+Process:
+  - Processor: GitHubReleasesInfoProvider
+    Comment: >-
+      The vendor also tags pre-releases, such as 1.2.0b. This processor skips
+      them by default.
+    Arguments:
+      github_repo: "%GITHUB_REPO%"
+      asset_regex: fuse-t-macos-installer-[0-9.]+\.pkg$
+
+  - Processor: URLDownloaderPython
+    Arguments:
+      download_missing_file: "%DOWNLOAD_MISSING_FILE%"
+      filename: "%NAME%.pkg"
+      url: "%url%"
+
+  # The check phase ends here, so a CI run can reuse a cached download.
+  - Processor: EndOfCheckPhase
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%pathname%"
+      strict_verification: true
+      deep_verification: true
+      expected_authority_names:
+        - "Developer ID Installer: alex fishman (6DY7Z4SVDZ)"
+        - "Developer ID Certification Authority"
+        - "Apple Root CA"
