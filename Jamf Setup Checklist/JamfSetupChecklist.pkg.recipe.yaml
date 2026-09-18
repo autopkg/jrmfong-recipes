@@ -1,5 +1,6 @@
 Description: |
-  Downloads the most recent signed release pkg of Jamf Setup Checklist.
+  Downloads the latest version of Jamf Setup Checklist and renames the
+  package to include the version.
 
 Identifier: com.github.jrmfong.pkg.JamfSetupChecklist
 ParentRecipe: com.github.jrmfong.download.JamfSetupChecklist
