@@ -1,4 +1,6 @@
-Description: Downloads and package the latest version of Adobe Acrobat DC Unified Application and renames the package.
+Description: |
+  Downloads the latest version of Adobe Acrobat DC Unified Application and
+  renames the package to include the version.
 Identifier: com.github.jrmfong.pkg.AdobeAcrobatDCUnifiedApplication
 ParentRecipe: com.github.dataJAR-recipes.download.Adobe Acrobat DC Unified Application
 MinimumVersion: "2.3"
