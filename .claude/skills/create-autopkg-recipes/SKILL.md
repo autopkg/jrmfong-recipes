@@ -94,7 +94,6 @@ MinimumVersion: "2.3"
 Input:
   NAME: AppName
   DOWNLOAD_MISSING_FILE: "True"
-  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
 
 Process:
   - Processor: URLDownloaderPython
@@ -105,10 +104,6 @@ Process:
 
   # The check phase ends here. Nothing above this line opens the dmg.
   - Processor: EndOfCheckPhase
-
-  - Processor: StopProcessingIf
-    Arguments:
-      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
 
   # The first step that mounts the dmg, and it sits after the marker.
   - Processor: CodeSignatureVerifier
@@ -253,10 +248,10 @@ downloaded file.
 
 | Shape | Order |
 |-------|-------|
-| dmg | `URLDownloaderPython`, `EndOfCheckPhase`, `StopProcessingIf`, `CodeSignatureVerifier`, `Versioner` |
-| zip | `URLDownloaderPython`, `EndOfCheckPhase`, `StopProcessingIf`, `Unarchiver`, `CodeSignatureVerifier`, `Versioner` |
-| pkg | `URLDownloaderPython`, `EndOfCheckPhase`, `StopProcessingIf`, `CodeSignatureVerifier` |
-| URL behind a page | `URLTextSearcher`, `URLDownloaderPython`, `EndOfCheckPhase`, `StopProcessingIf`, then as above |
+| dmg | `URLDownloaderPython`, `EndOfCheckPhase`, `CodeSignatureVerifier`, `Versioner` |
+| zip | `URLDownloaderPython`, `EndOfCheckPhase`, `Unarchiver`, `CodeSignatureVerifier`, `Versioner` |
+| pkg | `URLDownloaderPython`, `EndOfCheckPhase`, `CodeSignatureVerifier` |
+| URL behind a page | `URLTextSearcher`, `URLDownloaderPython`, `EndOfCheckPhase`, then as above |
 
 A Sparkle appcast can enclose a zip rather than a dmg. Read the type of the
 enclosure URL in the appcast before you assume a dmg. A zip needs `Unarchiver`
@@ -277,17 +272,10 @@ This repo uses `URLDownloaderPython`. Tell whoever runs the CI job to cache
 the sidecar the downloader reports `missing download info (FileNotFoundError)`
 and downloads the file again.
 
-### Stop early when the download is unchanged
+### Do not add a StopProcessingIf guard
 
-An undeclared input breaks the recipe on every run, so declare the input key
-first. NSPredicate reads the leading `%B` as a format specifier, and the run
-fails with "Too few arguments for format string". Add this to `Input`:
-
-```yaml
-  BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: "False"
-```
-
-Then add the guard straight after `EndOfCheckPhase`:
+You will see this pattern in other repos, and in this repo's own history. Do not
+add it to a new recipe:
 
 ```yaml
   - Processor: StopProcessingIf
@@ -295,25 +283,32 @@ Then add the guard straight after `EndOfCheckPhase`:
       predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
 ```
 
-Know what the guard does and does not save. `URLDownloader` already skips the
-download body on an ETag or Last-Modified match. `PkgCreator` already skips the
-build when a package of the same version and identifier exists. The guard
-removes the work between those 2 skips: the mount, the unarchive, the signature
-check and the copy. That is 1 to 2 seconds on a typical recipe here.
+It is meant to skip the mount, the unarchive, the signature check and the copy
+when the vendor file has not changed. That is 1 to 2 seconds on a typical recipe
+here, and 3 other mechanisms already cover it:
 
-The guard pays for itself when the chain uploads or imports, such as a
-`MunkiImporter` step or a Jamf upload. Weigh 2 costs against it.
-`CodeSignatureVerifier` stops running on a cached artifact. The whole chain also
-stops, so a pkg recipe builds nothing until you set
-`BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED=True`.
+| Mechanism | What it skips |
+| --- | --- |
+| the check phase and the metadata cache | the whole run |
+| an ETag or Last-Modified match in the downloader | the download body |
+| `PkgCreator` finding the same version and identifier | the package build |
 
-A 2-phase CI runner makes that second cost certain, so read this before you test
-in CI. The check phase downloads the file, so the runner sees a new download and
-starts the full run. The full run finds that same file in the cache, so
-`download_changed` is `False` and the guard stops the recipe before it packages.
-A single-phase local `autopkg run` never reaches that point, so the recipe
-packages fine on your machine and stages nothing in CI. The fix is to set the
-bypass to `True` in the override, not to change the recipe.
+The guard also sits below `EndOfCheckPhase`, so it never runs during the check
+phase at all. It cannot speed up the part a CI cache speeds up.
+
+Worse, a 2-phase runner turns it into a silent failure. The check phase
+downloads the file, so the runner sees a new download and starts the full run.
+The full run finds that same file in the cache, so `download_changed` is `False`
+and the guard stops the recipe before it packages. Nothing is staged, and the job
+still reports success. A single-phase local `autopkg run` never reaches that
+point, so the recipe packages fine on your machine.
+
+That is why every consumer ends up switching it back off. In the pipeline that
+runs these recipes, 24 of 72 overrides carry
+`BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED: 'True'` for no other reason.
+
+Leave the guard out and leave its input key out. A recipe you inherit that has
+one is worth cleaning up.
 
 ## 6. Conventions
 
@@ -332,8 +327,8 @@ Follow these conventions in every recipe:
 - set both `strict_verification: true` and `deep_verification: true` on every
   `CodeSignatureVerifier` step
 - take the `requirement` string from steps 3 and 4
-- put `EndOfCheckPhase` straight after the download, and the `StopProcessingIf`
-  guard straight after the marker
+- put `EndOfCheckPhase` straight after the download
+- add no `StopProcessingIf` guard, for the reason in step 5
 - add a `Comment:` to a step whose reason is not obvious from its arguments
 - set both `unattended_install` and `unattended_uninstall` to `true` in a munki
   `pkginfo`
