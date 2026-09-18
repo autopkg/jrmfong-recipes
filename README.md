@@ -79,7 +79,8 @@ SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` pa
 ## Running in CI
 
 Every recipe here is written so a CI job can restore a cached download and skip
-the work that follows. Three things make that work.
+the work that follows. Three things matter: where the marker sits, what the job
+caches, and what the recipes deliberately leave out.
 
 ### The check phase stops at the download
 
@@ -131,27 +132,22 @@ Cache the metadata rather than the downloaded files. `tar` drops extended
 attributes on macOS by default, so a restored file loses the ETag that
 `URLDownloader` compares against, and the download happens anyway.
 
-### The full run needs the bypass
+### No recipe stops itself early
 
-Every `download` recipe stops early when the vendor file is unchanged:
+No `download` recipe here carries a `StopProcessingIf` guard, and none declares
+`BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED`. Nothing has to be bypassed to
+make a full run package anything.
 
-```yaml
-  - Processor: StopProcessingIf
-    Arguments:
-      predicate: "download_changed == False AND %BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED% == False"
-```
+The guard used to sit after `EndOfCheckPhase` in every download recipe. It was
+removed because it saved nothing that the check phase, the downloader's ETag
+match and `PkgCreator` do not already save, and because a 2-phase runner turns it
+into a silent failure. The check phase downloads the file, the runner sees a new
+download and starts the full run, and the full run then finds that same file in
+the cache. `download_changed` is `False`, the chain stops before it builds
+anything, and the job still reports success.
 
-A 2-phase runner downloads during the check phase, sees a new download, then
-starts the full run. The full run finds that same file in the cache, so
-`download_changed` is `False` and the chain stops before it builds anything. A
-single-phase `autopkg run` on your own machine never reaches that point, so the
-recipe packages locally and stages nothing in CI.
-
-Set the bypass on the full run:
-
-```sh
-autopkg run -v com.github.jrmfong.pkg.SmoozePro -k BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED=True
-```
+An override that still sets `BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED` keeps
+working. The key is simply unused now, so you can drop it at your leisure.
 
 ### Known limits
 
@@ -177,4 +173,5 @@ When adding a recipe:
 3. Check the code signature in the `download` recipe. Pin the Team ID and bundle identifier, not just the anchor.
 4. Set `MinimumVersion` to the lowest AutoPkg release the processors actually need.
 5. Put `EndOfCheckPhase` straight after the download processor, and every step that mounts or unpacks the download after it.
-6. Add the recipe to the table above.
+6. Add no `StopProcessingIf` guard. See [Running in CI](#running-in-ci) for why.
+7. Add the recipe to the table above.
