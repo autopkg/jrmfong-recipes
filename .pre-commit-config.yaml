@@ -1,3 +1,7 @@
+# pre-commit-macadmin needs Python 3.10 or higher, and the system Python is 3.9.
+default_language_version:
+  python: python3.14
+
 repos:
   - repo: https://github.com/homebysix/pre-commit-macadmin
     rev: v1.25.1
@@ -7,3 +11,12 @@ repos:
       - id: forbid-autopkg-overrides
       - id: forbid-autopkg-trust-info
       - id: format-xml-plist
+
+  - repo: local
+    hooks:
+      - id: lint-check-phase
+        name: keep the download closed during the check phase
+        entry: python scripts/lint_check_phase.py
+        language: python
+        additional_dependencies: [pyyaml]
+        files: \.recipe\.yaml$
