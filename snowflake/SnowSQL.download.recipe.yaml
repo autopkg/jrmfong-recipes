@@ -1,5 +1,5 @@
 Description: |
-  Downloads the most recent signed release pkg of snowflake snowSQL.
+  Downloads the latest signed installer package of SnowSQL.
 
 Identifier: com.github.jrmfong.download.SnowSQL
 MinimumVersion: "2.9"
@@ -24,6 +24,7 @@ Process:
       request_headers:
         User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 
+  # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
 
   - Processor: StopProcessingIf
@@ -34,7 +35,7 @@ Process:
     Arguments:
       deep_verification: true
       strict_verification: true
-      input_path: "%RECIPE_CACHE_DIR%/downloads/%NAME%.pkg"
+      input_path: "%pathname%"
       expected_authority_names:
        - "Developer ID Installer: Snowflake Computing INC. (W4NT6CRQ7U)"
        - "Developer ID Certification Authority"
