@@ -1,5 +1,5 @@
 Description: |
-  Downloads the most recent signed release pkg of MyDPD Customer.
+  Downloads the latest signed dmg of MyDPD Customer.
 
 Identifier: com.github.jrmfong.download.MyDPDCustomer
 MinimumVersion: "2.9"
@@ -19,6 +19,7 @@ Process:
       request_headers:
         User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 
+  # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
 
   - Processor: StopProcessingIf
@@ -28,6 +29,6 @@ Process:
   - Processor: CodeSignatureVerifier
     Arguments:
       deep_verification: true
-      input_path: "%RECIPE_CACHE_DIR%/downloads/%NAME%.dmg/MyDPD Customer.app"
+      input_path: "%pathname%/MyDPD Customer.app"
       requirement: identifier "com.dpdgroup.mydpd" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7UH5YF3AE3"
       strict_verification: true
