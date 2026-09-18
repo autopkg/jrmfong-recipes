@@ -25,6 +25,7 @@ Process:
     Arguments:
       filename: "%NAME%.pkg"
 
+  # The check phase ends here, so a CI run can reuse a cached download.
   - Processor: EndOfCheckPhase
 
   - Processor: StopProcessingIf
