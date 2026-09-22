@@ -21,7 +21,8 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
   ```sh
   autopkg repo-add dataJAR-recipes    # Adobe Acrobat, Burp Suite, VeraCrypt
   autopkg repo-add nstrauss-recipes   # AWS Session Manager Plugin
-  autopkg repo-add grahampugh-recipes # PkgInfoReader - Adobe Acrobat, AWS, VeraCrypt, SnowSQL, Yamaha TF Editor
+  autopkg repo-add patgmac-recipes    # Netskope Client
+  autopkg repo-add grahampugh-recipes # PkgInfoReader - Adobe Acrobat, AWS, Netskope, VeraCrypt, SnowSQL, Yamaha TF Editor
   ```
 
   IntelliJ IDEA parents off `com.github.bnpl.autopkg.download.intellijidea`, which is not in the AutoPkg org. Add that repo by URL.
@@ -40,6 +41,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | IntelliJ IDEA | `pkg` | `com.github.jrmfong.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
 | Jamf Setup Checklist | `download`, `pkg` | `com.github.jrmfong.pkg.JamfSetupChecklist` | |
 | MyDPD Customer | `download`, `pkg` | `com.github.jrmfong.pkg.MyDPDCustomer` | |
+| Netskope Client | `pkg` | `com.github.jrmfong.pkg.Netskope` | `com.github.patgmac.download.Netskope` |
 | Shure Designer 6 | `download`, `pkg` | `com.github.jrmfong.pkg.ShureDesigner6` | |
 | Shure Update Utility | `download`, `pkg` | `com.github.jrmfong.pkg.ShureUpdateUtility` | |
 | Smooze Pro | `download`, `pkg` | `com.github.jrmfong.pkg.SmoozePro` | |
@@ -76,6 +78,7 @@ SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` pa
 - VeraCrypt ships 2 macOS builds per release. `Veracrypt.pkg` takes the macFUSE one through the dataJAR parent. `VeracryptFuseT.pkg` takes `VeraCrypt_FUSE-T_<version>.dmg` through a download recipe of its own, because the parent's `asset_regex` requires a digit straight after `VeraCrypt_` and an override cannot change a `Process` argument.
 - The VeraCrypt FUSE-T build needs fuse-t installed first. Its installer checks for `/usr/local/lib/libfuse-t.dylib` and refuses to run without it, so deploy `com.github.jrmfong.pkg.FuseT` ahead of it. It also needs macOS 12 or later.
 - Both VeraCrypt builds carry the package identifier `com.idrix.pkg.veracrypt` and the same version, so install only one of the 2 on a Mac. The built file names differ, because `Input/NAME` does.
+- Netskope Client downloads from your own tenant, at `https://<HOSTNAME>/dlr/mac/get`. The parent's default `HOSTNAME`, `download-company.goskope.com`, is a placeholder, so set `HOSTNAME` in an override before you run the recipe.
 - Shure Designer 6 ships as a nested ZIP holding an InstallBuilder app, not a drag-install `.app`. The `pkg` recipe wraps that installer and runs it unattended from a `postinstall` script. The package is a bootstrapper, not a copy of the payload.
 - Shure Designer 6 file names drop the version, but the identifiers keep the `6` suffix (`...ShureDesigner6`).
 - Shure Update Utility, Yamaha TF Editor and SnowSQL already ship a signed flat `.pkg`. These recipes read a version number, then re-copy the vendor package under a versioned name.
@@ -159,7 +162,7 @@ working. The key is simply unused now, so you can drop it at your leisure.
 
 - Eclipse Temurin JDK 25 and Jamf Setup Checklist read the GitHub releases API, as does the VeraCrypt parent. Give the job a token, through the `GITHUB_TOKEN` preference or the file at `GITHUB_TOKEN_PATH`, or it meets the anonymous rate limit.
 - The Yamaha TF Editor download returns no `ETag` and no `Last-Modified`, so `URLDownloader` falls back to matching on file size. That does not prove the build is unchanged.
-- The external parents for Adobe Acrobat, AWS Session Manager Plugin, Burp Suite, IntelliJ IDEA and VeraCrypt all check the code signature, but none sets `strict_verification`.
+- The external parents for Adobe Acrobat, AWS Session Manager Plugin, Burp Suite, IntelliJ IDEA, Netskope and VeraCrypt all check the code signature, but none sets `strict_verification`.
 
 ## Contributing
 
