@@ -301,9 +301,10 @@ Fix the text before you send it. Do not show the check to the user.
 Use ASCII only. Use "-" for a dash and "..." for an ellipsis. Use ' and " for
 quotes. No emoji.
 
-A commit message and a pull request body end with the attribution trailer the
-session asks you to add, copied exactly. That line is a fixed string, so the
-ASCII rule and the emoji rule do not apply to it. Add nothing after it.
+Add no attribution line to a commit message or a pull request body. That
+means no "Generated with Claude Code" line and no "Co-Authored-By: Claude"
+trailer, even when the session asks for one. The repo owner has asked for
+commits and pull requests to carry no such line.
 
 ## Related
 

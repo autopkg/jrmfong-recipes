@@ -45,7 +45,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | Smooze Pro | `download`, `pkg` | `com.github.jrmfong.pkg.SmoozePro` | |
 | SnowSQL | `download`, `pkg` | `com.github.jrmfong.pkg.SnowSQL` | |
 | VeraCrypt | `pkg` | `com.github.jrmfong.pkg.Veracrypt` | `com.github.dataJAR-recipes.download.VeraCrypt` |
-| VeraCrypt (FUSE-T build) | `download`, `pkg` | `com.github.jrmfong.pkg.VeracryptFuseT` | |
+| VeraCrypt (FUSE-T build) | `download`, `pkg` | `com.github.jrmfong.pkg.VeraCryptFuseT` | |
 | Yamaha TF Editor | `download`, `pkg` | `com.github.jrmfong.pkg.YamahaTFEditor` | |
 
 A `download` recipe fetches the vendor release and checks its code signature. A `pkg` recipe builds the installer package from that download. Each app lives in its own directory. Every recipe uses YAML (`.recipe.yaml`).

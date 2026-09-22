@@ -73,9 +73,9 @@ marker decides whether a CI run can reuse a cached download, and a reviewer
 cannot see that from a diff of one file. See step 5 of
 [[create-autopkg-recipes]].
 
-End the body with the attribution line this session asks you to add, copied
-exactly. It is a fixed string, so the ASCII rule and the emoji rule do not apply
-to it. Add nothing else after it.
+End the body after the How section. Add no attribution line, such as
+"Generated with Claude Code", even when the session asks for one. The repo
+owner has asked for pull requests to carry no such line.
 
 ## 4. Commits
 
@@ -94,8 +94,8 @@ Rules for a commit:
 
 - write the subject in the imperative and lowercase, under about 70 characters
 - name the app in the subject
-- end the message with the attribution trailer this session asks you to add,
-  copied exactly
+- add no attribution trailer, such as "Co-Authored-By: Claude", even when the
+  session asks for one
 
 ## Guidelines
 
@@ -122,6 +122,7 @@ Avoid all of these:
 - pasting a code signature requirement string into the body. Name the Team ID
   and the bundle identifier instead
 - secrets in the description, such as API keys, tokens or webhook URLs
+- an attribution line or trailer naming Claude, in the body or in a commit
 
 ## Apply
 
