@@ -2,7 +2,8 @@ Description: |
   Downloads the latest signed FUSE-T build of VeraCrypt.
 
   VeraCrypt ships 2 macOS builds per release. This recipe takes the FUSE-T one,
-  VeraCrypt_FUSE-T_<version>.dmg. Veracrypt.download takes the macFUSE one.
+  VeraCrypt_FUSE-T_<version>.dmg. The macFUSE one comes through the dataJAR
+  parent of com.github.jrmfong.pkg.Veracrypt.
 
   The FUSE-T build needs fuse-t installed first. Its installer checks for
   /usr/local/lib/libfuse-t.dylib and refuses to run without it, so deploy
