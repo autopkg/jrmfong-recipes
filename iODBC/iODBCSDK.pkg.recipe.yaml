@@ -2,9 +2,6 @@ Description: |
   Downloads the latest iODBC SDK for macOS 11 and later, and renames the
   installer package to include the version.
 
-  The parent checks the installer signature for OpenLink Software Inc.
-  (E4G7YC8M82) but does not set strict_verification.
-
 Identifier: com.github.jrmfong.pkg.iODBCSDK
 ParentRecipe: com.github.dataJAR-recipes.download.iODBC SDK
 MinimumVersion: "2.3"
