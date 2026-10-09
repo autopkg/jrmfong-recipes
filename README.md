@@ -19,7 +19,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 - Parent repos. Recipes with an external parent need that repo added first:
 
   ```sh
-  autopkg repo-add dataJAR-recipes    # Adobe Acrobat, Burp Suite, VeraCrypt
+  autopkg repo-add dataJAR-recipes    # Adobe Acrobat, Burp Suite, iODBC SDK, VeraCrypt
   autopkg repo-add nstrauss-recipes   # AWS Session Manager Plugin
   autopkg repo-add patgmac-recipes    # Netskope Client
   autopkg repo-add grahampugh-recipes # PkgInfoReader - Adobe Acrobat, AWS, Netskope, VeraCrypt, SnowSQL, Yamaha TF Editor
@@ -38,6 +38,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | Eclipse Temurin JDK 25 | `download`, `pkg` | `com.github.jrmfong.pkg.EclipseTemurinJDK25` | |
 | Ekahau Capture | `download`, `pkg` | `com.github.jrmfong.pkg.EkahauCapture` | |
 | fuse-t | `download`, `pkg` | `com.github.jrmfong.pkg.FuseT` | |
+| iODBC SDK | `pkg` | `com.github.jrmfong.pkg.iODBCSDK` | `com.github.dataJAR-recipes.download.iODBC SDK` |
 | IntelliJ IDEA | `pkg` | `com.github.jrmfong.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
 | Jamf Setup Checklist | `download`, `pkg` | `com.github.jrmfong.pkg.JamfSetupChecklist` | |
 | MyDPD Customer | `download`, `pkg` | `com.github.jrmfong.pkg.MyDPDCustomer` | |

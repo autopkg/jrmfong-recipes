@@ -1,0 +1,21 @@
+Description: |
+  Downloads the latest iODBC SDK for macOS 11 and later, and renames the
+  installer package to include the version.
+
+  The parent checks the installer signature for OpenLink Software Inc.
+  (E4G7YC8M82) but does not set strict_verification.
+
+Identifier: com.github.jrmfong.pkg.iODBCSDK
+ParentRecipe: com.github.dataJAR-recipes.download.iODBC SDK
+MinimumVersion: "2.3"
+
+Input:
+  NAME: iODBCSDK
+
+Process:
+  # The version comes from the GitHub release in the parent. The installer is a
+  # distribution package with 5 components, so PkgInfoReader is not used.
+  - Processor: PkgCopier
+    Arguments:
+      source_pkg: "%pathname%/iODBC-SDK.pkg"
+      pkg_path: "%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg"
