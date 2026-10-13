@@ -1,0 +1,43 @@
+Description: |
+  Downloads the latest version of Google Web Designer and builds a package
+  from the app, with the bundle readable by every user.
+
+  The parent is the peshay download recipe, which verifies the app strictly
+  against Google's Team ID and reads the version from the app. Google ships
+  the app directory as mode 750 and its CodeResources file as 640. That is
+  harmless when a user drags the app, because they own the copy. A package
+  installs it as root:admin, and a standard user then cannot open it. Finder
+  reports the app as damaged or incomplete. PkgCreator sets every entry under
+  Applications to 0755. The code signature does not cover modes, so the app
+  stays valid.
+Identifier: com.github.jrmfong.pkg.GoogleWebDesigner
+ParentRecipe: com.github.peshay.download.GoogleWebDesigner
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Google Web Designer
+
+Process:
+  - Processor: PkgRootCreator
+    Arguments:
+      pkgroot: "%RECIPE_CACHE_DIR%/%NAME%"
+      pkgdirs:
+        Applications: "0775"
+
+  - Processor: Copier
+    Arguments:
+      source_path: "%pathname%/%app_name%"
+      destination_path: "%pkgroot%/Applications/%app_name%"
+
+  - Processor: PkgCreator
+    Arguments:
+      pkg_request:
+        pkgname: "%NAME%-%version%"
+        pkgdir: "%RECIPE_CACHE_DIR%"
+        id: "%bundleid%"
+        options: purge_ds_store
+        chown:
+          - path: Applications
+            user: root
+            group: admin
+            mode: "0755"
