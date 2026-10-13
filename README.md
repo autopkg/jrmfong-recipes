@@ -38,6 +38,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | Eclipse Temurin JDK 25 | `download`, `pkg` | `com.github.jrmfong.pkg.EclipseTemurinJDK25` | |
 | Ekahau Capture | `download`, `pkg` | `com.github.jrmfong.pkg.EkahauCapture` | |
 | fuse-t | `download`, `pkg` | `com.github.jrmfong.pkg.FuseT` | |
+| Google Web Designer | `pkg` | `com.github.jrmfong.pkg.GoogleWebDesigner` | `com.github.peshay.download.GoogleWebDesigner` |
 | iODBC SDK | `pkg` | `com.github.jrmfong.pkg.iODBCSDK` | `com.github.dataJAR-recipes.download.iODBC SDK` |
 | IntelliJ IDEA | `pkg` | `com.github.jrmfong.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
 | Jamf Setup Checklist | `download`, `pkg` | `com.github.jrmfong.pkg.JamfSetupChecklist` | |
@@ -77,6 +78,7 @@ SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` pa
 ### Notes on individual recipes
 
 - Jamf Setup Checklist comes from the [Jamf-Concepts/setup-checklist](https://github.com/Jamf-Concepts/setup-checklist) GitHub releases, read by `GitHubReleasesInfoProvider`.
+- Google Web Designer ships its app directory as mode 750 and its CodeResources file as 640. A package installs it as root:admin, so a standard user cannot open it and Finder reports it as damaged. The `pkg` recipe sets every entry under Applications to 0755 through PkgCreator's `chown`, which the code signature does not cover.
 - fuse-t comes from the [macos-fuse-t/fuse-t](https://github.com/macos-fuse-t/fuse-t) GitHub releases. Each release holds one universal package, and the version comes from the release tag rather than the package, because the vendor ships a distribution package with no product version of its own.
 - VeraCrypt ships 2 macOS builds per release. `Veracrypt.pkg` takes the macFUSE one through the dataJAR parent. `VeracryptFuseT.pkg` takes `VeraCrypt_FUSE-T_<version>.dmg` through a download recipe of its own, because the parent's `asset_regex` requires a digit straight after `VeraCrypt_` and an override cannot change a `Process` argument.
 - The VeraCrypt FUSE-T build needs fuse-t installed first. Its installer checks for `/usr/local/lib/libfuse-t.dylib` and refuses to run without it, so deploy `com.github.jrmfong.pkg.FuseT` ahead of it. It also needs macOS 12 or later.
