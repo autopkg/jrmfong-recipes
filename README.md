@@ -42,6 +42,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | IntelliJ IDEA | `pkg` | `com.github.jrmfong.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
 | Jamf Setup Checklist | `download`, `pkg` | `com.github.jrmfong.pkg.JamfSetupChecklist` | |
 | MyDPD Customer | `download`, `pkg` | `com.github.jrmfong.pkg.MyDPDCustomer` | |
+| RustRover | `pkg` | `com.github.jrmfong.pkg.RustRover` | `com.github.bnpl.autopkg.download.rustrover` |
 | Netskope Client | `pkg` | `com.github.jrmfong.pkg.Netskope` | `com.github.patgmac.download.Netskope` |
 | Shure Designer 6 | `download`, `pkg` | `com.github.jrmfong.pkg.ShureDesigner6` | |
 | Shure Update Utility | `download`, `pkg` | `com.github.jrmfong.pkg.ShureUpdateUtility` | |
@@ -55,7 +56,7 @@ A `download` recipe fetches the vendor release and checks its code signature. A 
 
 ### Architecture overrides
 
-4 recipes default to an Apple silicon build. Override the input to package for Intel:
+5 recipes default to an Apple silicon build. Override the input to package for Intel:
 
 | Recipe | Input | Default | Intel value |
 | --- | --- | --- | --- |
@@ -63,12 +64,13 @@ A `download` recipe fetches the vendor release and checks its code signature. A 
 | Burp Suite Professional | `DOWNLOAD_ARCH` | `MacOsArm64` | see parent |
 | Eclipse Temurin JDK 25 | `ARCH` | `aarch64` | `x64` |
 | IntelliJ IDEA | `DOWNLOAD_ARCH` | `macM1` | `mac` |
+| RustRover | `ARCH_TYPE` | `macM1` | `mac` |
 
 ```sh
 autopkg run -v com.github.jrmfong.pkg.IntelliJIDEA -k DOWNLOAD_ARCH=mac
 ```
 
-The parent download recipe defines the accepted `DOWNLOAD_ARCH` values, not this repo. Check the parent for the Intel equivalent before you override. Eclipse Temurin JDK 25 is defined here, and takes `aarch64` or `x64`.
+The parent download recipe defines the accepted `DOWNLOAD_ARCH` and `ARCH_TYPE` values, not this repo. Check the parent for the Intel equivalent before you override. Eclipse Temurin JDK 25 is defined here, and takes `aarch64` or `x64`.
 
 SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` package in the vendor page, so there is no input to switch it to Intel.
 
