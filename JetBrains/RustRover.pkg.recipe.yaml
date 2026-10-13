@@ -1,0 +1,20 @@
+Description: |
+  Downloads the latest version of RustRover and builds a package from the app.
+
+  The parent is the bnpl download recipe, which reads the release from the
+  JetBrains API, verifies the app signature strictly against JetBrains' Team ID
+  and reads the version from the app. ARCH_TYPE picks the build the parent
+  downloads. It defaults to macM1, for Apple silicon. Set it to mac for Intel.
+Identifier: com.github.jrmfong.pkg.RustRover
+ParentRecipe: com.github.bnpl.autopkg.download.rustrover
+MinimumVersion: "2.3"
+
+Input:
+  NAME: RustRover
+  ARCH_TYPE: macM1
+
+Process:
+  - Processor: AppPkgCreator
+    Arguments:
+      app_path: "%pathname%/*.app"
+      pkg_path: "%RECIPE_CACHE_DIR%/%NAME%-%version%.pkg"
