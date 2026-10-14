@@ -42,6 +42,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | iODBC SDK | `pkg` | `com.github.jrmfong.pkg.iODBCSDK` | `com.github.dataJAR-recipes.download.iODBC SDK` |
 | IntelliJ IDEA | `pkg` | `com.github.jrmfong.pkg.IntelliJIDEA` | `com.github.bnpl.autopkg.download.intellijidea` |
 | Jamf Setup Checklist | `download`, `pkg` | `com.github.jrmfong.pkg.JamfSetupChecklist` | |
+| LastPass for Desktop | `download`, `pkg` | `com.github.jrmfong.pkg.LastPassForDesktop` | |
 | MyDPD Customer | `download`, `pkg` | `com.github.jrmfong.pkg.MyDPDCustomer` | |
 | RustRover | `pkg` | `com.github.jrmfong.pkg.RustRover` | `com.github.bnpl.autopkg.download.rustrover` |
 | Netskope Client | `pkg` | `com.github.jrmfong.pkg.Netskope` | `com.github.patgmac.download.Netskope` |
@@ -83,6 +84,7 @@ SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` pa
 - VeraCrypt ships 2 macOS builds per release. `Veracrypt.pkg` takes the macFUSE one through the dataJAR parent. `VeracryptFuseT.pkg` takes `VeraCrypt_FUSE-T_<version>.dmg` through a download recipe of its own, because the parent's `asset_regex` requires a digit straight after `VeraCrypt_` and an override cannot change a `Process` argument.
 - The VeraCrypt FUSE-T build needs fuse-t installed first. Its installer checks for `/usr/local/lib/libfuse-t.dylib` and refuses to run without it, so deploy `com.github.jrmfong.pkg.FuseT` ahead of it. It also needs macOS 12 or later.
 - Both VeraCrypt builds carry the package identifier `com.idrix.pkg.veracrypt` and the same version, so install only one of the 2 on a Mac. The built file names differ, because `Input/NAME` does.
+- LastPass for Desktop writes its version with a dash, such as `2.2.0-2`, and the package name keeps it: `LastPass for Desktop-2.2.0-2.pkg`. A tool that reads the version after the last dash of a file name reads `2`, so rename the package first.
 - Netskope Client downloads from your own tenant, at `https://<HOSTNAME>/dlr/mac/get`. The parent's default `HOSTNAME`, `download-company.goskope.com`, is a placeholder, so set `HOSTNAME` in an override before you run the recipe.
 - Shure Designer 6 ships as a nested ZIP holding an InstallBuilder app, not a drag-install `.app`. The `pkg` recipe wraps that installer and runs it unattended from a `postinstall` script. The package is a bootstrapper, not a copy of the payload.
 - Shure Designer 6 file names drop the version, but the identifiers keep the `6` suffix (`...ShureDesigner6`).
@@ -132,7 +134,7 @@ AutoPkg has 2 downloaders, and they record a download differently:
 
 | Downloader | Where the state lives | Recipes |
 | --- | --- | --- |
-| `URLDownloader` | extended attributes on the file | Eclipse Temurin, Shure Designer 6, Shure Update Utility, Yamaha TF Editor, and every external parent |
+| `URLDownloader` | extended attributes on the file | Eclipse Temurin, LastPass for Desktop, Shure Designer 6, Shure Update Utility, Yamaha TF Editor, and every external parent |
 | `URLDownloaderPython` | a `.info.json` file beside the download | CueTimer, Ekahau Capture, fuse-t, Jamf Setup Checklist, MyDPD Customer, Smooze Pro, SnowSQL, VeraCrypt FUSE-T |
 
 Cache `AutoPkg/Cache/*/downloads/*.info.json` along with the metadata cache. Miss
