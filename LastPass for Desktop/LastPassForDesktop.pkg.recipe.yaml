@@ -1,0 +1,19 @@
+Description: |
+  Downloads the latest version of LastPass for Desktop and builds a package
+  from the app in the dmg.
+
+  The version comes from the app's CFBundleShortVersionString. LastPass
+  writes it with a dash, such as 2.2.0-2, so the package is named
+  "LastPass for Desktop-2.2.0-2.pkg".
+
+Identifier: com.github.jrmfong.pkg.LastPassForDesktop
+ParentRecipe: com.github.jrmfong.download.LastPassForDesktop
+MinimumVersion: "2.3"
+
+Input:
+  NAME: LastPass for Desktop
+
+Process:
+  - Processor: AppPkgCreator
+    Arguments:
+      app_path: "%pathname%/LastPass for Desktop.app"
