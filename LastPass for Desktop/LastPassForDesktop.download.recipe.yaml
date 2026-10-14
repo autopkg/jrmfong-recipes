@@ -1,0 +1,28 @@
+Description: |
+  Downloads the latest signed dmg of LastPass for Desktop.
+
+  The URL always serves the newest universal build, for Apple silicon and
+  Intel. The dmg holds the app itself, signed by LastPass US LP and notarized.
+
+Identifier: com.github.jrmfong.download.LastPassForDesktop
+MinimumVersion: "2.3"
+
+Input:
+  NAME: LastPass for Desktop
+  DOWNLOAD_URL: https://download.cloud.lastpass.com/lastpass-for-desktop-macos/universal/LastPassForDesktopMac.dmg
+
+Process:
+  - Processor: URLDownloader
+    Arguments:
+      url: "%DOWNLOAD_URL%"
+      filename: "%NAME%.dmg"
+
+  # The check phase ends here, so a CI run can reuse a cached download.
+  - Processor: EndOfCheckPhase
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%pathname%/LastPass for Desktop.app"
+      strict_verification: true
+      deep_verification: true
+      requirement: identifier "com.lastpass.lastpass-electron" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = RNDLY9ZML8
