@@ -232,7 +232,6 @@ Linux as well as on the Mac.
 
 - Eclipse Temurin JDK 25 and Jamf Setup Checklist read the GitHub releases API, as does the VeraCrypt parent. Give the job a token, through the `GITHUB_TOKEN` preference or the file at `GITHUB_TOKEN_PATH`, or it meets the anonymous rate limit.
 - The Yamaha TF Editor download returns no `ETag` and no `Last-Modified`, so `URLDownloader` falls back to matching on file size. That does not prove the build is unchanged.
-- The external parents for Adobe Acrobat, AWS Session Manager Plugin, Burp Suite, IntelliJ IDEA, Netskope and VeraCrypt all check the code signature, but none sets `strict_verification`.
 
 ## Contributing
 
