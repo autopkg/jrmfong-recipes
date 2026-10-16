@@ -6,6 +6,7 @@ com.github.jrmfong.download.EclipseTemurinJDK25
 com.github.jrmfong.download.EkahauCapture
 com.github.jrmfong.download.FuseT
 com.github.jrmfong.download.JamfSetupChecklist
+com.github.jrmfong.download.LastPassForDesktop
 com.github.jrmfong.download.MyDPDCustomer
 com.github.jrmfong.download.ShureDesigner6
 com.github.jrmfong.download.ShureUpdateUtility
