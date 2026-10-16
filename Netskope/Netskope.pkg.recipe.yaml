@@ -6,8 +6,7 @@ Description: |
   HOSTNAME, download-company.goskope.com, is a placeholder, so set HOSTNAME to
   your own tenant in an override before you run this recipe.
 
-  The parent checks the installer signature for netSkope, Inc. (24W52P9M7W)
-  but does not set strict_verification.
+  The parent checks the installer signature for netSkope, Inc. (24W52P9M7W).
 
 Identifier: com.github.jrmfong.pkg.Netskope
 ParentRecipe: com.github.patgmac.download.Netskope

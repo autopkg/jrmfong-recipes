@@ -124,14 +124,16 @@ Strict verification rejects a bundle that carries extra or unsealed files. Deep
 verification checks the nested code, such as frameworks, helpers and XPC
 services.
 
-Only one of the 2 changes what codesign does. `deep_verification` already
-defaults to `true` in `CodeSignatureVerifier`, so writing it is documentation.
-`strict_verification` has no default, so codesign runs without `--strict` until
-you set it. Leave it out and a bundle carrying extra or unsealed files passes.
-Write both anyway, so the next reader sees which checks apply.
+On AutoPkg 3.0, which this repo recommends, both default to `true` in
+`CodeSignatureVerifier`, so writing them is documentation. On 2.9 and earlier
+`strict_verification` has no default, so codesign runs without `--strict`
+until you set it, and a bundle carrying extra or unsealed files passes. Write
+both anyway, so the recipe checks the same things on every version and the
+next reader sees which checks apply.
 
-Most third-party download recipes set neither. Read the parent before you rely
-on it, and say so in your report at step 9 when it runs without `--strict`.
+Most third-party download recipes set neither, which is fine on 3.0. Read the
+parent before you rely on it, and say so in your report at step 9 when it sets
+`strict_verification` to `false`.
 
 The `requirement` is the designated requirement string you captured at step 3.
 It is the strictest form, so use it rather than `expected_authority_names`.
