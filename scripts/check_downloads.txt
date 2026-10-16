@@ -1,0 +1,20 @@
+# Recipes the download check runs, on GitHub Actions and in
+# scripts/check_downloads.sh. One identifier per line. The pkg recipes here
+# have a parent in another repo, so they have no download recipe of their own.
+com.github.jrmfong.download.CueTimer
+com.github.jrmfong.download.EclipseTemurinJDK25
+com.github.jrmfong.download.EkahauCapture
+com.github.jrmfong.download.FuseT
+com.github.jrmfong.download.JamfSetupChecklist
+com.github.jrmfong.download.MyDPDCustomer
+com.github.jrmfong.download.ShureDesigner6
+com.github.jrmfong.download.ShureUpdateUtility
+com.github.jrmfong.download.SmoozePro
+com.github.jrmfong.download.SnowSQL
+com.github.jrmfong.download.VeraCryptFuseT
+com.github.jrmfong.download.YamahaTFEditor
+com.github.jrmfong.pkg.AdobeAcrobatDCUnifiedApplication
+com.github.jrmfong.pkg.AWSSessionManagerPlugin
+com.github.jrmfong.pkg.BurpSuite
+com.github.jrmfong.pkg.IntelliJIDEA
+com.github.jrmfong.pkg.Veracrypt
