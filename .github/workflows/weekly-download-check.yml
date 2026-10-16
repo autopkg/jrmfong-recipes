@@ -1,0 +1,110 @@
+# Checks that every download recipe still finds its file, without downloading it.
+#
+# The job runs the AutoPkg check phase on a Linux runner. That phase stops at
+# EndOfCheckPhase, so it scrapes the vendor page or the GitHub release, then
+# asks the server whether the file changed. The runner keeps only the
+# .info.json sidecar of each download between runs, never the file. Before the
+# run it puts a sparse placeholder of the recorded size beside each sidecar,
+# which makes AutoPkg send the stored ETag. The server answers 304 and no body
+# is transferred.
+#
+# A new vendor release downloads once, so the sidecar can be updated. A broken
+# URL, regex or release match fails the job.
+#
+# The job runs twice a week rather than once, because GitHub evicts a cache
+# that nobody has read for 7 days. A weekly schedule would miss it by minutes.
+
+name: Download check
+
+# The schedule and the manual trigger only work once this file is on main.
+# The pull request trigger runs the file from the pull request, so a change
+# to the check, or to a recipe, is tested before it merges.
+on:
+  schedule:
+    - cron: "0 7 * * 1,4" # Monday and Thursday, 7am UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/weekly-download-check.yml"
+      - "scripts/**"
+      - "**/*.recipe.yaml"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install AutoPkg and the parent repos
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone --quiet --depth 1 --branch v3.0.0 https://github.com/autopkg/autopkg "$HOME/autopkg"
+          pip install --quiet appdirs certifi lxml pyyaml xattr
+          mkdir -p "$HOME/.config/Autopkg"
+          cat > "$HOME/.config/Autopkg/config.json" <<JSON
+          {
+            "CACHE_DIR": "$HOME/.cache/autopkg",
+            "RECIPE_REPO_DIR": "$HOME/autopkg-repos",
+            "RECIPE_SEARCH_DIRS": ["$GITHUB_WORKSPACE"],
+            "GITHUB_TOKEN": "$GH_TOKEN"
+          }
+          JSON
+          python "$HOME/autopkg/Code/autopkg" repo-add dataJAR-recipes nstrauss-recipes grahampugh-recipes bnpl-recipes
+
+      - name: Restore the download metadata from the last run
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/autopkg/*/downloads/*.info.json
+          key: autopkg-download-info-${{ github.run_id }}
+          restore-keys: autopkg-download-info-
+
+      # A sparse file of the recorded size takes no disk, and it satisfies the
+      # size comparison that AutoPkg makes when a cached file is present.
+      - name: Put a placeholder beside each sidecar
+        run: |
+          for info in "$HOME"/.cache/autopkg/*/downloads/*.info.json; do
+            [ -e "$info" ] || continue
+            file="${info%.info.json}"
+            [ -e "$file" ] && continue
+            truncate -s "$(jq -r '.file_size // 1' "$info")" "$file"
+          done
+
+      # The list is shared with scripts/check_downloads.sh, which runs the
+      # same check on a Mac.
+      - name: Run the check phase
+        run: python "$HOME/autopkg/Code/autopkg" run --check --recipe-list scripts/check_downloads.txt --report-plist report.plist
+
+      # AutoPkg exits 70 when any recipe fails, which fails the job and makes
+      # GitHub send the failure email. This step puts the broken recipes and
+      # their errors at the top of the run page, so the log need not be read.
+      - name: List the broken recipes in the job summary
+        if: failure()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import plistlib
+          with open("report.plist", "rb") as handle:
+              failures = plistlib.load(handle)["failures"]
+          print("## Broken download recipes\n")
+          for item in failures:
+              print(f"- `{item['recipe']}`: {item['message']}")
+          PY
+
+      # One issue per broken recipe, titled "Download recipe broken: <id>".
+      # A later failure adds a comment to it, and the issue closes itself on
+      # the first run where the recipe passes again.
+      - name: Open, update or close an issue for each recipe
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python scripts/flag_broken_recipes.py report.plist

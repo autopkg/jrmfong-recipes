@@ -89,7 +89,9 @@ SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` pa
 
 Every recipe here is written so a CI job can restore a cached download and skip
 the work that follows. Three things matter: where the marker sits, what the job
-caches, and what the recipes deliberately leave out.
+caches, and what the recipes deliberately leave out. A GitHub Actions workflow
+in this repo uses that to check every download recipe twice a week. See
+[the download check on GitHub Actions](#the-download-check-on-github-actions).
 
 ### The check phase stops at the download
 
@@ -158,6 +160,68 @@ anything, and the job still reports success.
 An override that still sets `BYPASS_STOP_PROCESSING_IF_DOWNLOAD_UNCHANGED` keeps
 working. The key is simply unused now, so you can drop it at your leisure.
 
+### The download check on GitHub Actions
+
+`.github/workflows/weekly-download-check.yml` runs the check phase of every
+recipe in `scripts/check_downloads.txt` on a Linux runner, on Monday and
+Thursday at 7am UTC. The list holds the 12 download recipes and the 5 `pkg`
+recipes with a parent in another repo. Netskope is left out, because its
+parent needs `HOSTNAME`.
+
+The runner keeps only the `.info.json` sidecars between runs, and puts a
+sparse placeholder of the recorded size beside each one before the run. That
+makes AutoPkg send the stored ETag, so an unchanged file is never fetched
+again. AutoPkg 3.0.0 compares the server's Content-Length with the file on
+disk, so a placeholder of any other size reads as changed. The whole run takes
+about a minute. A new vendor release downloads once, so its sidecar updates.
+
+A broken recipe does 3 things:
+
+- fails the job, so GitHub emails whoever last committed the workflow
+- appears in the job summary at the top of the run page, with its error
+- gets an issue titled `Download recipe broken: <identifier>`, holding the
+  error and a link to the run. A later failure adds a comment to that issue,
+  and it closes itself on the first run where the recipe passes
+
+Run the workflow by hand from the Actions tab with Run workflow, or with
+`gh workflow run weekly-download-check.yml`. Both need the file on `main`.
+A pull request that changes the workflow, anything in `scripts/`, or a recipe
+runs the check as well, from the pull request's own copy of the file, so a
+change is tested before it merges. The issue logic lives in
+`scripts/flag_broken_recipes.py`, and
+`python3 scripts/test_flag_broken_recipes.py` tests it without touching
+GitHub.
+
+### Troubleshoot a broken recipe locally
+
+1. Run the same check on your Mac. `scripts/check_downloads.sh` runs the whole
+   list, and `scripts/check_downloads.sh com.github.jrmfong.download.SnowSQL`
+   runs one recipe. The script passes the recipe files in this working copy to
+   `autopkg run --check -v`, so an uncommitted fix is what gets tested. A
+   parent from another repo still comes from your cloned repos.
+2. Read the error. The table below covers the common ones.
+3. Add `-vv` to the `autopkg run --check` command for the HTTP headers and the
+   text the regex ran against.
+4. After the fix, run the full chain with `autopkg run -vv` on the download
+   and the `pkg` recipe files. The check phase stops at the download, so it
+   never sees the signature check or the package build.
+5. Commit the fix. The next scheduled run closes the issue, or run the
+   workflow by hand.
+
+| Error | Likely cause | Where to look |
+| --- | --- | --- |
+| `HTTP Error 404: Not Found` | the vendor moved the file | `DOWNLOAD_URL`, or the `url` argument of the downloader |
+| `No match found on URL` | the download page changed, so `re_pattern` no longer matches | `curl -sL <page>` and test the pattern against it |
+| `No releases found` or `No release assets were found` | the asset name or the tag format changed, or the latest release is a pre-release | `gh release list -R <owner>/<repo>` and `gh release view --json assets` |
+| `API rate limit exceeded` | anonymous GitHub API calls, 60 an hour | set the `GITHUB_TOKEN` preference |
+| `CERTIFICATE_VERIFY_FAILED` | a proxy or TLS inspection on your network | `SSL_CERT_FILE`, or run the check from another network |
+
+A recipe can pass on your Mac and fail on the runner. The runner uses AutoPkg
+3.0.0 on Linux, where only the check phase works, and it has no overrides. So
+a `pkg` recipe whose parent needs an override, such as Netskope, cannot run
+there, and a step that opens the download before `EndOfCheckPhase` fails on
+Linux as well as on the Mac.
+
 ### Known limits
 
 - Eclipse Temurin JDK 25 and Jamf Setup Checklist read the GitHub releases API, as does the VeraCrypt parent. Give the job a token, through the `GITHUB_TOKEN` preference or the file at `GITHUB_TOKEN_PATH`, or it meets the anonymous rate limit.
@@ -184,3 +248,6 @@ When adding a recipe:
 5. Put `EndOfCheckPhase` straight after the download processor, and every step that mounts or unpacks the download after it.
 6. Add no `StopProcessingIf` guard. See [Running in CI](#running-in-ci) for why.
 7. Add the recipe to the table above.
+8. Add the identifier to `scripts/check_downloads.txt`, so the download check
+   covers it. Add a `pkg` recipe there only when its parent lives in another
+   repo, because that chain has no download recipe here.
