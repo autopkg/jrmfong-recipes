@@ -15,7 +15,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 
 ### Requirements
 
-- AutoPkg 2.3 or later. Every recipe is YAML, which needs 2.3 as a minimum. AutoPkg 2.9 or later for the ones that use `URLDownloaderPython`: CueTimer, Ekahau Capture, fuse-t, Jamf Setup Checklist, MyDPD Customer, Smooze Pro, SnowSQL and the VeraCrypt FUSE-T build.
+- AutoPkg 3.0 or above, which is what this repo recommends. On 3.0 both downloaders keep a `.info.json` sidecar beside each download and skip an unchanged file, and the download check in [Running in CI](#running-in-ci) runs on 3.0, so a local run behaves the same way. The hard minimums are lower: 2.3 for the YAML format, and 2.9 for the recipes that use `URLDownloaderPython`: CueTimer, Ekahau Capture, fuse-t, Jamf Setup Checklist, MyDPD Customer, Smooze Pro, SnowSQL and the VeraCrypt FUSE-T build.
 - Parent repos. Recipes with an external parent need that repo added first:
 
   ```sh
@@ -132,46 +132,22 @@ signature check may appear before it.
 
 ### What the job has to cache
 
-AutoPkg has 2 downloaders, and where each one records a download depends on
-the AutoPkg version:
-
-| AutoPkg | `URLDownloader` | `URLDownloaderPython` |
-| --- | --- | --- |
-| 2.9 and earlier | extended attributes on the file | a `.info.json` file beside the download |
-| 3.0 and later | a `.info.json` file beside the download, plus the attributes for older tools | a `.info.json` file beside the download |
-
-`URLDownloader` serves Eclipse Temurin, LastPass for Desktop, Shure Designer
-6, Shure Update Utility, Yamaha TF Editor and every external parent.
-`URLDownloaderPython` serves CueTimer, Ekahau Capture, fuse-t, Jamf Setup
-Checklist, MyDPD Customer, Smooze Pro, SnowSQL and VeraCrypt FUSE-T.
-
-AutoPkg 3.0 made the 2 downloaders work the same way. Both read the sidecar,
-both compare the server's `ETag`, `Last-Modified` and `Content-Length` against
-it, and both take `DOWNLOAD_MISSING_FILE`, which decides whether a file that
-has gone missing while the server is unchanged gets fetched again. A 3.0
-install still reads the attributes that a 2.9 cache left on a file, and writes
-the sidecar on the next download. The GitHub workflow runs on 3.0, so the
-sidecar is all it keeps.
+On AutoPkg 3.0, `URLDownloader` and `URLDownloaderPython` record a download
+the same way: a `.info.json` sidecar beside the file, holding the server's
+`ETag`, `Last-Modified` and `Content-Length`. Both compare the next response
+against that sidecar, and both take `DOWNLOAD_MISSING_FILE`, which decides
+whether a file that has gone missing while the server is unchanged gets
+fetched again.
 
 Cache `AutoPkg/Cache/*/downloads/*.info.json` along with the metadata cache.
-Without the sidecars, every recipe on 3.0, and the 8 `URLDownloaderPython`
-recipes on 2.9, fetch the file again on every run. On 2.9 the log says:
+Without the sidecars, every recipe fetches its file again on every run.
 
-```
-URLDownloaderPython: WARNING: missing download info (FileNotFoundError)
-```
-
-On 2.9, cache the metadata rather than the downloaded files. `tar` drops
-extended attributes on macOS by default, so a restored file loses the ETag
-that `URLDownloader` compares against, and the download happens anyway.
-
-On 3.0 the sidecar replaces the attributes, but 2 details of the comparison
-still matter to a runner that keeps no files. The downloader sends the
-conditional headers only when a file sits beside the sidecar, and it compares
-the server's `Content-Length` with the size of that file rather than with the
-sidecar. So a runner has to put back a sparse placeholder of the recorded
-size, which is what the workflow does. A placeholder of any other size reads
-as a changed download.
+Two details still matter to a runner that keeps no files. The downloader
+sends the conditional headers only when a file sits beside the sidecar, and it
+compares the server's `Content-Length` with the size of that file rather than
+with the sidecar. So the runner has to put back a sparse placeholder of the
+recorded size, which is what the workflow does. A placeholder of any other
+size reads as a changed download.
 
 ### No recipe stops itself early
 
