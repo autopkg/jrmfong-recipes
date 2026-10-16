@@ -242,3 +242,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/git,linux,macos,windows,terraform,terragrunt,jetbrains+all,visualstudiocode
+
+# Local credentials for the AutoPkg runner, never committed
+_secrets/
