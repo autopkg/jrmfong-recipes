@@ -1,0 +1,36 @@
+Description: |
+  Downloads the current Printix Client dmg for macOS from your Printix tenant,
+  and checks the signature of the installer package inside it.
+
+  PRINTIX_TENANT_ID must be set in an override. It is the tenant UUID in the
+  download link that the Printix admin console offers under Software, such as
+  https://api.printix.net/v1/software/tenants/<tenant id>/appl/CLIENT/os/MAC/type/DMG.
+  It is left empty here so that no tenant ends up in a public repo.
+
+  Without a version parameter, the link serves the current client. The version
+  in the tenant's software listing can be older than the file it serves, so the
+  pkg recipe reads the version from the app instead.
+
+Identifier: com.github.jrmfong.download.PrintixClient
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Printix Client
+  PRINTIX_TENANT_ID: ""
+
+Process:
+  - Processor: URLDownloader
+    Arguments:
+      url: "https://api.printix.net/v1/software/tenants/%PRINTIX_TENANT_ID%/appl/CLIENT/os/MAC/type/DMG"
+      filename: "%NAME%.dmg"
+
+  # The check phase ends here, so a CI run can reuse a cached download.
+  - Processor: EndOfCheckPhase
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%pathname%/Printix Client.pkg"
+      expected_authority_names:
+        - "Developer ID Installer: Tungsten Automation Corporation (B9C7GRQCYQ)"
+        - "Developer ID Certification Authority"
+        - "Apple Root CA"
