@@ -1,0 +1,338 @@
+Description: |
+  Builds a PaperCut Hive package from the edge node and print client in the
+  public update feeds.
+
+  The package lays out the same folder as PaperCut's bulk installer in
+  /Library/Application Support/PaperCut Hive Installer, with an install.sh that
+  takes the same 3 arguments: the system key, the region and the org ID. The
+  bulk zip's own install.sh and Uninstall.command are not in the feeds, so this
+  recipe writes its own, following the same steps.
+
+  The postinstall script runs install.sh when the Mac has the 3 values in the
+  managed preference domain com.github.jrmfong.PaperCutHive, under the keys
+  SystemKey, Region and OrgId. Without them the package only stages the files,
+  and a policy script can run install.sh with the values instead.
+
+  install.sh needs a logged-in user, because the print client installs into that
+  user's Library, as PaperCut's does.
+
+Identifier: com.github.jrmfong.pkg.PaperCutHive
+ParentRecipe: com.github.jrmfong.download.PaperCutHive
+MinimumVersion: "2.3"
+
+Input:
+  NAME: PaperCut Hive
+  PKG_ID: com.github.jrmfong.PaperCutHive
+
+Process:
+  - Processor: PkgRootCreator
+    Arguments:
+      pkgroot: "%RECIPE_CACHE_DIR%/pkgroot"
+      pkgdirs:
+        Library: "0755"
+        Library/Application Support: "0755"
+        Library/Application Support/PaperCut Hive Installer: "0755"
+        Library/Application Support/PaperCut Hive Installer/edgenode: "0755"
+        Library/Application Support/PaperCut Hive Installer/client: "0755"
+
+  # The feeds' folders are named update<version>. An installed component keeps
+  # each build in v<version>, which is what the service configuration includes.
+  - Processor: Copier
+    Arguments:
+      source_path: "%RECIPE_CACHE_DIR%/unpack/edgenode/update%edgenode_version%"
+      destination_path: "%pkgroot%/Library/Application Support/PaperCut Hive Installer/edgenode/v%edgenode_version%"
+      overwrite: true
+
+  - Processor: Copier
+    Arguments:
+      source_path: "%RECIPE_CACHE_DIR%/unpack/client/update%client_version%"
+      destination_path: "%pkgroot%/Library/Application Support/PaperCut Hive Installer/client/v%client_version%"
+      overwrite: true
+
+  - Processor: FileCreator
+    Arguments:
+      file_path: "%pkgroot%/Library/Application Support/PaperCut Hive Installer/edgenode/.version"
+      file_content: |
+        %edgenode_version%
+
+  - Processor: FileCreator
+    Arguments:
+      file_path: "%pkgroot%/Library/Application Support/PaperCut Hive Installer/client/.version"
+      file_content: |
+        %client_version%
+
+  # The service definitions, as the bulk zip ships them. The updater URLs are the
+  # feeds this recipe reads, and each component checks them every 12 hours.
+  - Processor: FileCreator
+    Arguments:
+      file_path: "%pkgroot%/Library/Application Support/PaperCut Hive Installer/edgenode/pc-edgenode-service.conf"
+      file_content: |
+        {
+            "ServiceDescription": {
+                "DisplayName": "PaperCut Hive EdgeNode",
+                "Description": "PaperCut Hive EdgeNode"
+            },
+            "ServiceConfig": {
+                "LogFile": "data/logs/${ServiceName}.log",
+                "LogFileMaxSizeMb": 50
+            },
+            "Include": ["v*/pc-edgenode-subservice.conf"],
+            "StartupTasks": [
+             {
+                 "Path": "./pc-edgenode-updater",
+                 "Args": ["%EDGENODE_FEED_URL%"],
+                 "TimeoutSecs": 3600,
+                 "StartupDelaySecs": 600,
+                 "StartupRandomDelaySecs": 3600,
+                 "Async": true
+             }
+            ],
+            "ScheduledTasks": [
+             {
+                 "Schedule": "0 0 */12 * * *",
+                 "Path": "./pc-edgenode-updater",
+                 "Args": ["%EDGENODE_FEED_URL%"],
+                 "StartupRandomDelaySecs": 3600,
+                 "TimeoutSecs": 3600
+             }
+            ],
+            "Commands": [
+                {
+                    "Name": "force-update",
+                    "Path": "./pc-edgenode-updater",
+                    "Args": ["-c", "0", "%EDGENODE_FEED_URL%"]
+                },
+                {
+                    "Name": "update-now",
+                    "Path": "./pc-edgenode-updater",
+                    "Args": ["%EDGENODE_FEED_URL%"]
+                }
+            ]
+        }
+
+  - Processor: FileCreator
+    Arguments:
+      file_path: "%pkgroot%/Library/Application Support/PaperCut Hive Installer/client/pc-print-client-service.conf"
+      file_content: |
+        {
+            "ServiceDescription": {
+                "DisplayName": "PaperCut Hive Print Client",
+                "Description": "PaperCut Hive Print Client"
+            },
+            "ServiceConfig": {
+                "LogFile": "data/logs/${ServiceName}.log",
+                "LogFileMaxSizeMb": 50,
+                "UserLevel" : true
+            },
+            "Include": ["v*/pc-print-client-subservice.conf"],
+            "StartupTasks": [
+             {
+                 "Path": "./pc-print-client-updater",
+                 "Args": ["%CLIENT_FEED_URL%"],
+                 "TimeoutSecs": 3600,
+                 "StartupDelaySecs": 600,
+                 "StartupRandomDelaySecs": 3600,
+                 "Async": true
+             }
+            ],
+            "ScheduledTasks": [
+             {
+                 "Schedule": "0 0 */12 * * *",
+                 "Path": "./pc-print-client-updater",
+                 "Args": ["%CLIENT_FEED_URL%"],
+                 "StartupRandomDelaySecs": 3600,
+                 "TimeoutSecs": 3600
+             }
+            ],
+            "Commands": [
+                {
+                    "Name": "force-update",
+                    "Path": "./pc-print-client-updater",
+                    "Args": ["-c", "0", "%CLIENT_FEED_URL%"]
+                },
+                {
+                    "Name": "update-now",
+                    "Path": "./pc-print-client-updater",
+                    "Args": ["%CLIENT_FEED_URL%"]
+                }
+            ]
+        }
+
+  # The same steps as the bulk zip's install.sh. 2 differences: the edge node
+  # version comes from edgenode/.version rather than being written into the
+  # script, and the print client is copied by root and then given to the user,
+  # rather than handing the user this root-owned folder.
+  - Processor: FileCreator
+    Arguments:
+      file_path: "%pkgroot%/Library/Application Support/PaperCut Hive Installer/install.sh"
+      file_mode: "0755"
+      file_content: |
+        #!/bin/bash
+        # Install PaperCut Hive: the edge node for the whole Mac, then the print
+        # client and the PaperCut Printer queue for the logged-in user.
+        #
+        # Usage, as root: install.sh <system key> <region> <org ID>
+        set -u
+
+        say() { echo "[PaperCut Hive] $*"; }
+        die() { say "ERROR: $*" >&2; exit 1; }
+
+        [ "$(id -u)" -eq 0 ] || die "run as root"
+        [ $# -ge 3 ] || die "usage: install.sh <system key> <region> <org ID>"
+        system_key="$1"
+        region="$2"
+        org_id="$3"
+        [ -n "$system_key" ] && [ -n "$region" ] && [ -n "$org_id" ] \
+            || die "the system key, region and org ID must not be empty"
+
+        here="$(cd "$(dirname "$0")" && pwd)"
+        en_version="$(cat "$here/edgenode/.version")"
+        cl_version="$(cat "$here/client/.version")"
+        en_target="/Library/PaperCut Hive"
+
+        user="$(stat -f '%Su' /dev/console)"
+        case "$user" in
+            "" | root | loginwindow | _mbsetupuser) die "no user is logged in" ;;
+        esac
+        uid="$(id -u "$user")"
+        home="$(dscl . -read "/Users/$user" NFSHomeDirectory | awk '{print $2}')"
+        [ -d "$home" ] || die "no home folder for $user"
+        cl_target="$home/Library/PaperCut Hive"
+
+        as_user() { launchctl asuser "$uid" sudo -u "$user" "$@"; }
+
+        # Everything runs from this folder, as PaperCut's script does.
+        cd "$here" || die "cannot enter $here"
+        say "edge node $en_version, print client $cl_version, user $user"
+
+        # Edge node. An install over the top unregisters the old service first.
+        if [ -x "$en_target/pc-edgenode-service" ]; then
+            say "removing the existing edge node service"
+            "$en_target/pc-edgenode-service" stop || say "stop failed with code $?"
+            "$en_target/pc-edgenode-service" uninstall || say "uninstall failed with code $?"
+        fi
+        mkdir -p "$en_target/data/logs" "$en_target/data/config"
+        cp -R "$here/edgenode/." "$en_target/"
+        cp "$en_target/v$en_version/silver-universal/pc-edgenode-service" "$en_target/pc-edgenode-service"
+        cp "$en_target/v$en_version/silver-universal/pc-edgenode-updater" "$en_target/pc-edgenode-updater"
+        chmod 755 "$en_target/pc-edgenode-service" "$en_target/pc-edgenode-updater"
+        "$en_target/pc-edgenode-service" command split-edgenode
+
+        say "linking the edge node"
+        "$en_target/pc-edgenode-service" command link --bulklink --region "$region" \
+            --systemKey "$system_key" --appVersion="$en_version" \
+            --edgenodeUpdaterPath="./pc-edgenode-updater" || die "linking the edge node failed"
+
+        say "installing the edge node service"
+        "$en_target/pc-edgenode-service" install || die "installing the edge node service failed"
+        "$en_target/pc-edgenode-service" command install-dpm
+        # PaperCut's script clears quarantine from its CUPS backend and filter,
+        # because Gatekeeper can prompt for them although they are notarized.
+        xattr -dr com.apple.quarantine /usr/libexec/cups/backend/papercut 2>/dev/null
+        xattr -dr com.apple.quarantine /usr/libexec/cups/filter/papercut 2>/dev/null
+        "$en_target/pc-edgenode-service" start || die "starting the edge node service failed"
+
+        # Print client, a user-level service in the user's own Library.
+        if [ -x "$cl_target/pc-print-client-service" ]; then
+            say "removing the existing print client service"
+            as_user "$cl_target/pc-print-client-service" stop || say "stop failed with code $?"
+            as_user "$cl_target/pc-print-client-service" uninstall || say "uninstall failed with code $?"
+        fi
+        mkdir -p "$cl_target/data/logs" "$cl_target/data/config"
+        cp -R "$here/client/." "$cl_target/"
+        cp "$cl_target/v$cl_version/silver-universal/pc-print-client-service" "$cl_target/pc-print-client-service"
+        cp "$cl_target/v$cl_version/silver-universal/pc-print-client-updater" "$cl_target/pc-print-client-updater"
+        chmod 755 "$cl_target/pc-print-client-service" "$cl_target/pc-print-client-updater"
+        chown -R "$user:staff" "$cl_target"
+
+        say "linking the print client"
+        as_user "$cl_target/pc-print-client-service" command bulk-link --region "$region" \
+            --orgId "$org_id" || die "linking the print client failed"
+        as_user "$cl_target/pc-print-client-service" install || die "installing the print client service failed"
+        as_user "$cl_target/pc-print-client-service" start || die "starting the print client service failed"
+
+        # After bulk-link, which writes the region file the queue reads.
+        say "installing the PaperCut Printer queue"
+        "$cl_target/pc-print-client-service" command install-queue \
+            -printerId="PAPERCUT_POCKET_PRINTER" -printerName="PaperCut Printer" \
+            || die "installing the print queue failed"
+
+        sed "s|@user_name@|$user|g" "$here/Uninstall.command" > "$en_target/Uninstall.command"
+        chmod 755 "$en_target/Uninstall.command"
+        say "done"
+
+  - Processor: FileCreator
+    Arguments:
+      file_path: "%pkgroot%/Library/Application Support/PaperCut Hive Installer/Uninstall.command"
+      file_mode: "0755"
+      file_content: |
+        #!/bin/bash
+        # Remove PaperCut Hive: the print queue, the user's print client and the
+        # edge node. install.sh writes this to /Library/PaperCut Hive with the
+        # user filled in. Pass -y to skip the question.
+        if [ "${1:-}" != "-y" ]; then
+            read -r -p "Uninstall PaperCut Hive? [yes or no] " reply
+            case "$reply" in [yY] | [yY][eE][sS]) ;; *) exit 0 ;; esac
+        fi
+        user='@user_name@'
+        cl_target="$(dscl . -read "/Users/$user" NFSHomeDirectory | awk '{print $2}')/Library/PaperCut Hive"
+        sudo /bin/bash -c "
+            '/Library/PaperCut Hive/pc-edgenode-service' stop
+            '/Library/PaperCut Hive/pc-edgenode-service' uninstall
+            lpadmin -x PAPERCUT_POCKET_PRINTER
+            su - '$user' -c \"'$cl_target/pc-print-client-service' stop\"
+            su - '$user' -c \"'$cl_target/pc-print-client-service' uninstall\"
+            rm -rf '$cl_target'
+            sleep 5
+            '/Library/PaperCut Hive/pc-edgenode-service' command uninstall
+            rm -rf '/Library/PaperCut Hive'
+        "
+        echo "PaperCut Hive is removed."
+
+  - Processor: PkgRootCreator
+    Arguments:
+      pkgroot: "%RECIPE_CACHE_DIR%/scripts"
+      pkgdirs: {}
+
+  - Processor: FileCreator
+    Arguments:
+      file_path: "%RECIPE_CACHE_DIR%/scripts/postinstall"
+      file_mode: "0755"
+      file_content: |
+        #!/bin/bash
+        # Run install.sh when the Mac has the org values in a managed preference.
+        # Without them, leave the files staged for a policy script to install.
+        [ "$3" = "/" ] || exit 0
+        staged="/Library/Application Support/PaperCut Hive Installer"
+        domain="/Library/Managed Preferences/%PKG_ID%"
+        read_pref() { /usr/bin/defaults read "$domain" "$1" 2>/dev/null; }
+        system_key="$(read_pref SystemKey)"
+        region="$(read_pref Region)"
+        org_id="$(read_pref OrgId)"
+        if [ -z "$system_key" ] || [ -z "$region" ] || [ -z "$org_id" ]; then
+            echo "PaperCut Hive staged in $staged. No SystemKey, Region and OrgId in"
+            echo "%PKG_ID%, so run install.sh there with those 3 values."
+            exit 0
+        fi
+        "$staged/install.sh" "$system_key" "$region" "$org_id"
+
+  - Processor: PkgCreator
+    Arguments:
+      pkg_request:
+        id: "%PKG_ID%"
+        options: purge_ds_store
+        pkgname: "%NAME%-%version%"
+        pkgroot: "%RECIPE_CACHE_DIR%/pkgroot"
+        scripts: "%RECIPE_CACHE_DIR%/scripts"
+        version: "%version%"
+        chown:
+          - path: Library
+            user: root
+            group: wheel
+
+  - Processor: PathDeleter
+    Arguments:
+      path_list:
+        - "%RECIPE_CACHE_DIR%/pkgroot"
+        - "%RECIPE_CACHE_DIR%/scripts"
+        - "%RECIPE_CACHE_DIR%/unpack"

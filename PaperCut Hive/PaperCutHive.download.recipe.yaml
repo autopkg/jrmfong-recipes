@@ -1,0 +1,120 @@
+Description: |
+  Downloads the latest PaperCut Hive edge node and print client for macOS, from
+  the public update feeds the installed components poll, and checks both
+  signatures.
+
+  PaperCut's full installer, the bulk zip, is only offered behind a signed link
+  in the Hive admin console. The feeds carry the same signed binaries, but the
+  edge node feed can trail the bulk zip by a few weeks. An installed edge node
+  updates itself from that same feed every 12 hours.
+
+  The version is the edge node build, such as 2026.08.21.0157. PaperCut writes it
+  as 2026-08-21-0157, which is kept in edgenode_version.
+
+Identifier: com.github.jrmfong.download.PaperCutHive
+MinimumVersion: "2.3"
+
+Input:
+  NAME: PaperCut Hive
+  EDGENODE_FEED_URL: https://update.cloud.papercut.com/check-update/pmitc-systemclient-release
+  CLIENT_FEED_URL: https://update.pmitc.papercut.com/client-version/v2/check-update/hive-client/mac
+
+Process:
+  # Each feed is a JSON document of url, version and sha256, in that order. The
+  # edge node feed refuses a request without an X-OS-Type header.
+  - Processor: URLTextSearcher
+    Arguments:
+      url: "%EDGENODE_FEED_URL%"
+      request_headers:
+        X-OS-Type: darwin
+      re_pattern: '"url":\s*"(?P<edgenode_url>https://[^"]+-mac\.zip)",\s*"version":\s*"(?P<edgenode_version>(?P<edgenode_y>\d{4})-(?P<edgenode_m>\d{2})-(?P<edgenode_d>\d{2})-(?P<edgenode_t>\d{4}))"'
+
+  - Processor: URLDownloader
+    Arguments:
+      url: "%edgenode_url%"
+      filename: hive-edgenode-mac.zip
+
+  - Processor: URLTextSearcher
+    Arguments:
+      url: "%CLIENT_FEED_URL%"
+      re_pattern: '"url":\s*"(?P<client_url>https://[^"]+-mac\.zip)",\s*"version":\s*"(?P<client_version>\d{4}-\d{2}-\d{2}-\d{4})"'
+
+  - Processor: URLDownloader
+    Arguments:
+      url: "%client_url%"
+      filename: hive-printclient-mac.zip
+
+  # The check phase ends here, so a CI run can reuse a cached download.
+  - Processor: EndOfCheckPhase
+
+  - Processor: Unarchiver
+    Arguments:
+      archive_path: "%RECIPE_CACHE_DIR%/downloads/hive-edgenode-mac.zip"
+      destination_path: "%RECIPE_CACHE_DIR%/unpack/edgenode"
+      purge_destination: true
+
+  - Processor: Unarchiver
+    Arguments:
+      archive_path: "%RECIPE_CACHE_DIR%/downloads/hive-printclient-mac.zip"
+      destination_path: "%RECIPE_CACHE_DIR%/unpack/client"
+      purge_destination: true
+
+  # Every binary that runs as root or as the service, signed by PaperCut
+  # Software International (B5N3YV5P2H). They are bare Mach-O files, so each
+  # one is checked on its own.
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%RECIPE_CACHE_DIR%/unpack/edgenode/update%edgenode_version%/pc-edgenode"
+      strict_verification: true
+      requirement: identifier "pc-edgenode" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = B5N3YV5P2H
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%RECIPE_CACHE_DIR%/unpack/edgenode/update%edgenode_version%/silver-universal/pc-edgenode-service"
+      strict_verification: true
+      requirement: identifier "pc-edgenode-service" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = B5N3YV5P2H
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%RECIPE_CACHE_DIR%/unpack/edgenode/update%edgenode_version%/silver-universal/pc-edgenode-updater"
+      strict_verification: true
+      requirement: identifier "pc-edgenode-updater" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = B5N3YV5P2H
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%RECIPE_CACHE_DIR%/unpack/client/update%client_version%/pc-print-client"
+      strict_verification: true
+      requirement: identifier "pc-print-client" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = B5N3YV5P2H
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%RECIPE_CACHE_DIR%/unpack/client/update%client_version%/silver-universal/pc-print-client-service"
+      strict_verification: true
+      requirement: identifier "pc-print-client-service" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = B5N3YV5P2H
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%RECIPE_CACHE_DIR%/unpack/client/update%client_version%/silver-universal/pc-print-client-updater"
+      strict_verification: true
+      requirement: identifier "pc-print-client-updater" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = B5N3YV5P2H
+
+  # No core processor replaces the dashes in PaperCut's version, so write the
+  # dotted form into a plist and read it back as the version.
+  - Processor: FileCreator
+    Arguments:
+      file_path: "%RECIPE_CACHE_DIR%/version.plist"
+      file_content: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+          <key>version</key>
+          <string>%edgenode_y%.%edgenode_m%.%edgenode_d%.%edgenode_t%</string>
+        </dict>
+        </plist>
+
+  - Processor: PlistReader
+    Arguments:
+      info_path: "%RECIPE_CACHE_DIR%/version.plist"
+      plist_keys:
+        version: version
