@@ -47,6 +47,7 @@ Identifiers follow a single pattern: `com.github.jrmfong.<type>.<Name>`, e.g. `c
 | RustRover | `pkg` | `com.github.jrmfong.pkg.RustRover` | `com.github.bnpl.autopkg.download.rustrover` |
 | Netskope Client | `pkg` | `com.github.jrmfong.pkg.Netskope` | `com.github.patgmac.download.Netskope` |
 | PaperCut Hive | `download`, `pkg` | `com.github.jrmfong.pkg.PaperCutHive` | |
+| Printix Client | `download`, `pkg` | `com.github.jrmfong.pkg.PrintixClient` | |
 | Shure Designer 6 | `download`, `pkg` | `com.github.jrmfong.pkg.ShureDesigner6` | |
 | Shure Update Utility | `download`, `pkg` | `com.github.jrmfong.pkg.ShureUpdateUtility` | |
 | Smooze Pro | `download`, `pkg` | `com.github.jrmfong.pkg.SmoozePro` | |
@@ -90,6 +91,9 @@ SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` pa
 - PaperCut Hive comes from the 2 public update feeds that an installed edge node and print client poll, not from PaperCut's bulk installer, which the Hive admin console only offers behind a signed link. The feeds carry the same signed binaries, but the edge node feed can trail the bulk installer by a few weeks. An installed edge node updates itself from the feed every 12 hours.
 - The PaperCut Hive package stages the bulk installer's layout in `/Library/Application Support/PaperCut Hive Installer`, with an `install.sh` that takes the same 3 arguments: the system key, the region and the org ID. Its postinstall runs `install.sh` when the managed preference domain `com.github.jrmfong.PaperCutHive` holds `SystemKey`, `Region` and `OrgId`. Without them it only stages the files. Managed preferences are readable by every local user, so use a policy script instead if the system key must stay private. `install.sh` needs a logged-in user, because the print client installs into that user's Library.
 - PaperCut writes versions such as `2026-08-21-0157`. The PaperCut Hive recipe sets `version` to the dotted form, `2026.08.21.0157`, and keeps PaperCut's own in `edgenode_version` and `client_version`.
+- Printix Client downloads from your own tenant. Set `PRINTIX_TENANT_ID`, the tenant UUID in the admin console's download link, and `PRINTIX_TENANT_DOMAIN`, such as `acme.printix.net`, in an override. Both are empty here so that no tenant ends up in this repo.
+- The Printix Client reads its tenant from the name of the installer that ran it, `CLIENT_{<tenant domain>}_{<tenant id>}.pkg`, so a renamed package signs in to no tenant in particular. The `pkg` recipe carries the vendor package, signed and unchanged, in its scripts under that name, and its postinstall runs it with `installer`. The package can then take any name.
+- The Printix tenant's software listing can report an older version than the file its download link serves, so the `pkg` recipe reads the version from the app.
 - Shure Designer 6 ships as a nested ZIP holding an InstallBuilder app, not a drag-install `.app`. The `pkg` recipe wraps that installer and runs it unattended from a `postinstall` script. The package is a bootstrapper, not a copy of the payload.
 - Shure Designer 6 file names drop the version, but the identifiers keep the `6` suffix (`...ShureDesigner6`).
 - Shure Update Utility, Yamaha TF Editor and SnowSQL already ship a signed flat `.pkg`. These recipes read a version number, then re-copy the vendor package under a versioned name.
@@ -175,8 +179,8 @@ working. The key is simply unused now, so you can drop it at your leisure.
 `.github/workflows/weekly-download-check.yml` runs the check phase of every
 recipe in `scripts/check_downloads.txt` on a Linux runner, on Monday and
 Thursday at 7am UTC. The list holds the 14 download recipes and the 5 `pkg`
-recipes with a parent in another repo. Netskope is left out, because its
-parent needs `HOSTNAME`.
+recipes with a parent in another repo. Netskope and Printix Client are left
+out, because each needs a tenant of your own.
 
 The runner keeps only the `.info.json` sidecars between runs, and puts a
 sparse placeholder of the recorded size beside each one before the run. That

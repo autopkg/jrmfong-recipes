@@ -1,0 +1,87 @@
+Description: |
+  Builds a package that installs the Printix Client under the file name that
+  ties it to your tenant.
+
+  The Printix Client finds its tenant from the name of the installer that ran
+  it, in the form CLIENT_{<tenant domain>}_{<tenant id>}.pkg. The vendor's
+  postinstall records that name, and any mounted dmg, in
+  /Users/Shared/.Printix.net/PrintixPackage.txt. A package renamed for
+  deployment loses the tenant, and the client then offers sign-in options for
+  every tenant.
+
+  So this package carries the vendor package, signed and unchanged, in its
+  scripts under that name, and its postinstall runs it with installer. Set
+  PRINTIX_TENANT_DOMAIN, such as acme.printix.net, and PRINTIX_TENANT_ID in an
+  override.
+
+Identifier: com.github.jrmfong.pkg.PrintixClient
+ParentRecipe: com.github.jrmfong.download.PrintixClient
+MinimumVersion: "2.3"
+
+Input:
+  NAME: Printix Client
+  PRINTIX_TENANT_DOMAIN: ""
+  PKG_ID: com.github.jrmfong.PrintixClient
+
+Process:
+  - Processor: FlatPkgUnpacker
+    Arguments:
+      flat_pkg_path: "%pathname%/Printix Client.pkg"
+      destination_path: "%RECIPE_CACHE_DIR%/unpack"
+      purge_destination: true
+
+  - Processor: PkgPayloadUnpacker
+    Arguments:
+      pkg_payload_path: "%RECIPE_CACHE_DIR%/unpack/PrintixClient.pkg/Payload"
+      destination_path: "%RECIPE_CACHE_DIR%/payload"
+      purge_destination: true
+
+  - Processor: Versioner
+    Arguments:
+      input_plist_path: "%RECIPE_CACHE_DIR%/payload/Printix Client.app/Contents/Info.plist"
+      plist_version_key: CFBundleShortVersionString
+
+  - Processor: PkgRootCreator
+    Arguments:
+      pkgroot: "%RECIPE_CACHE_DIR%/scripts"
+      pkgdirs: {}
+
+  - Processor: Copier
+    Arguments:
+      source_path: "%pathname%/Printix Client.pkg"
+      destination_path: "%RECIPE_CACHE_DIR%/scripts/CLIENT_{%PRINTIX_TENANT_DOMAIN%}_{%PRINTIX_TENANT_ID%}.pkg"
+      overwrite: true
+
+  - Processor: FileCreator
+    Arguments:
+      file_path: "%RECIPE_CACHE_DIR%/scripts/postinstall"
+      file_mode: "0755"
+      file_content: |
+        #!/bin/bash
+        # Run the vendor package under the name that carries the tenant, so
+        # the Printix Client signs in to that tenant only.
+        here="$(cd "$(dirname "$0")" && pwd)"
+        /usr/sbin/installer -pkg "$here/CLIENT_{%PRINTIX_TENANT_DOMAIN%}_{%PRINTIX_TENANT_ID%}.pkg" -target "$3"
+
+  - Processor: PkgRootCreator
+    Arguments:
+      pkgroot: "%RECIPE_CACHE_DIR%/pkgroot"
+      pkgdirs: {}
+
+  - Processor: PkgCreator
+    Arguments:
+      pkg_request:
+        id: "%PKG_ID%"
+        options: purge_ds_store
+        pkgname: "%NAME%-%version%"
+        pkgroot: "%RECIPE_CACHE_DIR%/pkgroot"
+        scripts: "%RECIPE_CACHE_DIR%/scripts"
+        version: "%version%"
+
+  - Processor: PathDeleter
+    Arguments:
+      path_list:
+        - "%RECIPE_CACHE_DIR%/unpack"
+        - "%RECIPE_CACHE_DIR%/payload"
+        - "%RECIPE_CACHE_DIR%/scripts"
+        - "%RECIPE_CACHE_DIR%/pkgroot"
