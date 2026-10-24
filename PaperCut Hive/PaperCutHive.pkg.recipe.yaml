@@ -8,10 +8,11 @@ Description: |
   bulk zip's own install.sh and Uninstall.command are not in the feeds, so this
   recipe writes its own, following the same steps.
 
-  The postinstall script runs install.sh when the Mac has the 3 values in the
-  managed preference domain com.github.jrmfong.PaperCutHive, under the keys
-  SystemKey, Region and OrgId. Without them the package only stages the files,
-  and a policy script can run install.sh with the values instead.
+  The package only stages these files. It has no postinstall and installs
+  nothing, because install.sh needs the org's system key, which is private to
+  the organisation and does not belong in a package. Run install.sh from your
+  management tool after the package, such as from a Jamf policy script that
+  takes the 3 values as parameters.
 
   install.sh needs a logged-in user, because the print client installs into that
   user's Library, as PaperCut's does.
@@ -289,33 +290,6 @@ Process:
         "
         echo "PaperCut Hive is removed."
 
-  - Processor: PkgRootCreator
-    Arguments:
-      pkgroot: "%RECIPE_CACHE_DIR%/scripts"
-      pkgdirs: {}
-
-  - Processor: FileCreator
-    Arguments:
-      file_path: "%RECIPE_CACHE_DIR%/scripts/postinstall"
-      file_mode: "0755"
-      file_content: |
-        #!/bin/bash
-        # Run install.sh when the Mac has the org values in a managed preference.
-        # Without them, leave the files staged for a policy script to install.
-        [ "$3" = "/" ] || exit 0
-        staged="/Library/Application Support/PaperCut Hive Installer"
-        domain="/Library/Managed Preferences/%PKG_ID%"
-        read_pref() { /usr/bin/defaults read "$domain" "$1" 2>/dev/null; }
-        system_key="$(read_pref SystemKey)"
-        region="$(read_pref Region)"
-        org_id="$(read_pref OrgId)"
-        if [ -z "$system_key" ] || [ -z "$region" ] || [ -z "$org_id" ]; then
-            echo "PaperCut Hive staged in $staged. No SystemKey, Region and OrgId in"
-            echo "%PKG_ID%, so run install.sh there with those 3 values."
-            exit 0
-        fi
-        "$staged/install.sh" "$system_key" "$region" "$org_id"
-
   - Processor: PkgCreator
     Arguments:
       pkg_request:
@@ -323,7 +297,6 @@ Process:
         options: purge_ds_store
         pkgname: "%NAME%-%version%"
         pkgroot: "%RECIPE_CACHE_DIR%/pkgroot"
-        scripts: "%RECIPE_CACHE_DIR%/scripts"
         version: "%version%"
         chown:
           - path: Library
@@ -334,5 +307,4 @@ Process:
     Arguments:
       path_list:
         - "%RECIPE_CACHE_DIR%/pkgroot"
-        - "%RECIPE_CACHE_DIR%/scripts"
         - "%RECIPE_CACHE_DIR%/unpack"
