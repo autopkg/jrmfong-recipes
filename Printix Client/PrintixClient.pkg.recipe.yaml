@@ -14,6 +14,15 @@ Description: |
   PRINTIX_TENANT_DOMAIN, such as acme.printix.net, and PRINTIX_TENANT_ID in an
   override.
 
+  The postinstall also removes the quarantine attribute from the vendor
+  package before it runs, and from the installed app after. A package run
+  from inside another package's scripts can carry that attribute, and
+  installer passes it on to everything it installs. The vendor's own
+  postinstall then adds a MonoBundle symlink that the app's code seal does
+  not cover, and Gatekeeper refuses a quarantined app with a broken seal as
+  damaged. Without quarantine the seal is never checked, which is how a
+  direct install of the vendor package behaves.
+
 Identifier: com.github.jrmfong.pkg.PrintixClient
 ParentRecipe: com.github.jrmfong.download.PrintixClient
 MinimumVersion: "2.3"
@@ -61,7 +70,14 @@ Process:
         # Run the vendor package under the name that carries the tenant, so
         # the Printix Client signs in to that tenant only.
         here="$(cd "$(dirname "$0")" && pwd)"
-        /usr/sbin/installer -pkg "$here/CLIENT_{%PRINTIX_TENANT_DOMAIN%}_{%PRINTIX_TENANT_ID%}.pkg" -target "$3"
+        vendor_pkg="$here/CLIENT_{%PRINTIX_TENANT_DOMAIN%}_{%PRINTIX_TENANT_ID%}.pkg"
+        # Strip quarantine before and after. installer passes the attribute
+        # from a quarantined package to everything it installs, and the
+        # vendor's postinstall then breaks the app's code seal with a
+        # MonoBundle symlink, so Gatekeeper calls a quarantined app damaged.
+        /usr/bin/xattr -d com.apple.quarantine "$vendor_pkg" 2>/dev/null || true
+        /usr/sbin/installer -pkg "$vendor_pkg" -target "$3" || exit $?
+        /usr/bin/xattr -dr com.apple.quarantine "$3/Applications/Printix Client.app" 2>/dev/null || true
 
   - Processor: PkgRootCreator
     Arguments:
