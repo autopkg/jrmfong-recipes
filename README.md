@@ -75,7 +75,7 @@ autopkg run -v com.github.jrmfong.pkg.IntelliJIDEA -k DOWNLOAD_ARCH=mac
 
 The parent download recipe defines the accepted `DOWNLOAD_ARCH` and `ARCH_TYPE` values, not this repo. Check the parent for the Intel equivalent before you override. Eclipse Temurin JDK 25 is defined here, and takes `aarch64` or `x64`.
 
-SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` package in the vendor page, so there is no input to switch it to Intel.
+SnowSQL is Apple silicon only. Its download recipe reads the `darwin_arm64` directory of the Snowflake package repository, so there is no input to switch it to Intel.
 
 ### Notes on individual recipes
 
@@ -94,7 +94,8 @@ SnowSQL is Apple silicon only. Its download recipe matches the `darwin_arm64` pa
 - Shure Designer 6 file names drop the version, but the identifiers keep the `6` suffix (`...ShureDesigner6`).
 - Shure Update Utility, Yamaha TF Editor and SnowSQL already ship a signed flat `.pkg`. These recipes read a version number, then re-copy the vendor package under a versioned name.
 - SnowSQL and Yamaha TF Editor read that version with `PkgInfoReader`. Shure Update Utility cannot: its package declares `version="0"`, so the recipe unpacks the payload and reads the version from the app instead.
-- CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer, Smooze Pro and SnowSQL use `URLDownloaderPython` with a browser `User-Agent`. fuse-t uses the same downloader without one, because GitHub needs no such header.
+- SnowSQL comes from the Snowflake package repository at `sfc-repo.snowflakecomputing.com`, not from the download page on snowflake.com, which sits behind a Cloudflare challenge. `SnowSQLInfoProvider`, a processor in the `snowflake` directory, reads the repository indexes and picks the newest package by comparing the version numbers. The indexes are sorted as text, so a regular expression would pick the wrong file once a patch number reaches 10.
+- CueTimer, Ekahau Capture, Jamf Setup Checklist, MyDPD Customer and Smooze Pro use `URLDownloaderPython` with a browser `User-Agent`. fuse-t and SnowSQL use the same downloader without one, because GitHub and the Snowflake package repository need no such header.
 
 ## Running in CI
 
