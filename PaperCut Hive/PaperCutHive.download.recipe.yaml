@@ -11,6 +11,9 @@ Description: |
   The version is the edge node build, such as 2026.08.21.0157. PaperCut writes it
   as 2026-08-21-0157, which is kept in edgenode_version.
 
+  A new edge node build starts a build. A new print client on its own does not.
+  The build takes the newest client from its feed.
+
 Identifier: com.github.jrmfong.download.PaperCutHive
 MinimumVersion: "2.3"
 
@@ -34,6 +37,13 @@ Process:
       url: "%edgenode_url%"
       filename: hive-edgenode-mac.zip
 
+  # The check phase ends here, so a CI run can reuse a cached download. Only the
+  # edge node is checked. The version follows the edge node, and the print
+  # client updates itself. If both were checked, a client release on its own
+  # would start a full run with the edge node zip still an empty cached
+  # placeholder, and Unarchiver would fail on it.
+  - Processor: EndOfCheckPhase
+
   - Processor: URLTextSearcher
     Arguments:
       url: "%CLIENT_FEED_URL%"
@@ -42,10 +52,7 @@ Process:
   - Processor: URLDownloader
     Arguments:
       url: "%client_url%"
-      filename: hive-printclient-mac.zip
-
-  # The check phase ends here, so a CI run can reuse a cached download.
-  - Processor: EndOfCheckPhase
+      filename: hive-client-mac.zip
 
   - Processor: Unarchiver
     Arguments:
@@ -55,7 +62,7 @@ Process:
 
   - Processor: Unarchiver
     Arguments:
-      archive_path: "%RECIPE_CACHE_DIR%/downloads/hive-printclient-mac.zip"
+      archive_path: "%RECIPE_CACHE_DIR%/downloads/hive-client-mac.zip"
       destination_path: "%RECIPE_CACHE_DIR%/unpack/client"
       purge_destination: true
 
